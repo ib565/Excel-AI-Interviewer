@@ -29,6 +29,21 @@ The interview process follows a structured, adaptive flow:
 4. **Dynamic Question Generation**: When no suitable questions exist in the bank, agent generates new questions matching the intended difficulty and style
 5. **Comprehensive Evaluation**: Agent analyzes all responses to create a detailed performance report with strengths, areas for improvement, and proficiency assessment
 
+## Example LLM Loop
+2025-09-20 23:29:51,101 | LLM CALL<br>
+2025-09-20 23:29:53,148 | TOOL: get_next_question<br>
+2025-09-20 23:29:53,149 | QUESTION RETRIEVED<br>
+2025-09-20 23:30:32,079 | LLM CALL<br>
+2025-09-20 23:30:58,123 | LLM CALL<br>
+2025-09-20 23:31:01,734 | TOOL: get_next_question<br>
+2025-09-20 23:31:01,734 | QUESTION RETRIEVED<br>
+2025-09-20 23:31:13,965 | LLM CALL<br>
+2025-09-20 23:31:29,968 | LLM CALL<br>
+2025-09-20 23:31:33,010 | TOOL: generate_question<br>
+2025-09-20 23:31:33,010 | LLM CALL<br>
+2025-09-20 23:31:33,010 | TOOL: generate_performance_summary<br>
+2025-09-20 23:31:33,010 | LLM CALL<br>
+
 ### Key Features
 
 - **Conversational AI Interviewer**: Natural dialogue that adapts to candidate responses
