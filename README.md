@@ -29,6 +29,26 @@ The interview process follows a structured, adaptive flow:
 4. **Dynamic Question Generation**: When no suitable questions exist in the bank, agent generates new questions matching the intended difficulty and style
 5. **Comprehensive Evaluation**: Agent analyzes all responses to create a detailed performance report with strengths, areas for improvement, and proficiency assessment
 
+## Cold Start Solution
+
+**Problem**: System must work with minimal or no pre-existing questions.
+
+**Implementation**:
+- **Dynamic Generation**: LLM creates new Excel questions when question bank is exhausted
+- **Automatic Persistence**: Generated questions are saved to `data/question_bank.json` with metadata
+- **Bootstrap Growth**: Each interview expands the question bank organically
+- **Zero Downtime**: System functions immediately regardless of initial question count
+
+## Example Transcripts
+
+See the system in action with real interview examples:
+
+- [**Basic Excel Interview**](example_transcripts/transcript_08a33f35-c3a9-4011-b97f-49de7dfa78a7.md) - Covers fundamental Excel concepts and formulas
+- [**Intermediate Excel Interview**](example_transcripts/transcript_a734b355-8e02-4820-a058-c460e697cec1.md) - Demonstrates adaptive questioning and dynamic question generation
+- [**Advanced Excel Interview**](example_transcripts/transcript_cf825785-5a84-4999-aba8-0d11c7439b85.md) - Shows comprehensive evaluation with performance summary
+
+These transcripts demonstrate the full interview flow from self-assessment through final performance evaluation, including examples of the dynamic question generation mechanism.
+
 ## Example LLM Loop
 2025-09-20 23:29:51,101 | LLM CALL<br>
 2025-09-20 23:29:53,148 | TOOL: get_next_question<br>
