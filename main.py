@@ -222,10 +222,9 @@ def main() -> None:
 
         if response.end:
             st.session_state.ended = True
-            st.success(
-                "This interview session has ended. You can download the transcript or restart."
-            )
             save_event_line(st.session_state.session_id, "end", details=None)
+            # Force immediate rerun to apply disabled state to input
+            st.rerun()
 
     # Now render the transcript AFTER handling input
     container = st.container()
@@ -233,6 +232,12 @@ def main() -> None:
         for m in st.session_state.messages:
             with st.chat_message(m["role"]):
                 st.markdown(m["content"])
+
+    # Show success popup AFTER transcript rendering to ensure it's visible
+    if st.session_state.ended:
+        st.success(
+            "This interview session has ended. You can download the transcript or restart."
+        )
 
 
 if __name__ == "__main__":
