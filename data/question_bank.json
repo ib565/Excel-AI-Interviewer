@@ -1,143 +1,121 @@
 [
   {
     "id": 1,
-    "capability": ["Basic Formulas & Cell Referencing"],
+    "capability": ["Formulas"],
     "difficulty": "Easy",
     "text": "Explain the difference between relative, absolute and mixed references. Give an example formula that behaves differently when copied across cells and explain why."
   },
   {
     "id": 2,
-    "capability": ["Lookup & Reference (VLOOKUP/XLOOKUP/INDEX+MATCH)"],
+    "capability": ["Lookups"],
     "difficulty": "Medium",
     "text": "Compare VLOOKUP, INDEX+MATCH, and XLOOKUP: when would you choose each? Describe a scenario where VLOOKUP fails and show how you'd fix it."
   },
   {
     "id": 3,
-    "capability": [
-      "Lookup & Reference (VLOOKUP/XLOOKUP/INDEX+MATCH)",
-      "Dynamic Arrays & Array Formulas"
-    ],
+    "capability": ["Lookups", "Dynamic arrays"],
     "difficulty": "Hard",
     "text": "How would you perform a lookup with multiple criteria (e.g., find Sales for Product=A and Region=B) using formulas only? Provide at least two approaches — one using dynamic array functions and one compatible with older Excel."
   },
   {
     "id": 4,
-    "capability": ["Pivot Tables & Data Analysis"],
+    "capability": ["Pivots"],
     "difficulty": "Medium",
     "text": "Design a PivotTable (describe fields, layout and steps) to show monthly revenue by product and also display the Top 3 products per month."
   },
   {
     "id": 5,
-    "capability": ["Power Query (Get & Transform)"],
+    "capability": ["Power Query"],
     "difficulty": "Hard",
     "text": "You receive multiple CSV files with slightly different column names and mixed date formats. Describe a robust Power Query workflow to combine, normalize column names and date formats, handle errors, and load a clean table ready for analysis."
   },
   {
     "id": 6,
-    "capability": ["Power Pivot & DAX / Data Modeling"],
+    "capability": ["Data modeling"],
     "difficulty": "Advanced",
     "text": "Write (or describe) a DAX measure to calculate a rolling 12-month sales total that correctly handles sparse months and filter context. Explain how you'd validate that measure against a simple SUM."
   },
   {
     "id": 7,
-    "capability": ["VBA & Macros / Automation", "Error Handling & Debugging"],
+    "capability": ["VBA", "Error handling"],
     "difficulty": "Hard",
     "text": "Write (or outline) a VBA macro that loops through every worksheet in a workbook, finds all formulas in columns A:C and replaces them with their current values. Explain how you'd add error handling, logging and a safe-undo/backup strategy."
   },
   {
     "id": 8,
-    "capability": ["Conditional Formatting", "Date & Time Calculations"],
+    "capability": ["Conditional formatting", "Dates & times"],
     "difficulty": "Medium",
     "text": "How would you use a single conditional formatting rule to highlight entire rows where the Due Date is within the next 7 days and the Status column is blank? Provide the formula you'd use and explain application scope."
   },
   {
     "id": 9,
-    "capability": [
-      "Charts & Dashboards / Visualization",
-      "Named Ranges & Structured References"
-    ],
+    "capability": ["Charts", "Tables"],
     "difficulty": "Medium",
     "text": "Explain how to create a dynamic chart that updates when a user selects a month from a drop-down. Describe two methods: one using named dynamic ranges and one using Excel Tables/structured references (and which you prefer)."
   },
   {
     "id": 10,
-    "capability": ["Data Cleaning & Text Functions"],
+    "capability": ["Data cleaning"],
     "difficulty": "Medium",
     "text": "Given a column of inconsistent email entries and phone numbers, describe the formulas and Excel features you'd use to (a) extract domain names from emails, (b) standardize phone numbers to +CC-XXXXXXXXXX format, and (c) detect/remove invalid entries."
   },
   {
     "id": 11,
-    "capability": ["Date & Time Calculations"],
+    "capability": ["Dates & times"],
     "difficulty": "Medium",
     "text": "How would you calculate exact tenure between Hire Date and End Date as 'Y years, M months, D days'? How would you calculate total business days of tenure excluding a given set of public holidays?"
   },
   {
     "id": 12,
-    "capability": [
-      "Dynamic Arrays & Array Formulas",
-      "Lookup & Reference (VLOOKUP/XLOOKUP/INDEX+MATCH)"
-    ],
+    "capability": ["Dynamic arrays", "Lookups"],
     "difficulty": "Hard",
     "text": "Using dynamic array functions (UNIQUE, FILTER, SORT, INDEX) produce the top 5 salespeople by total sales for a selected region showing name and total. Then describe how to achieve the same result in legacy Excel without dynamic arrays."
   },
   {
     "id": 13,
-    "capability": ["Error Handling & Debugging"],
+    "capability": ["Error handling"],
     "difficulty": "Easy",
     "text": "What steps and functions do you use to handle and debug common formula errors (#N/A, #REF!, #VALUE!, #DIV/0!)? Give examples of when to use IFERROR vs IFNA and how to trace precedents/dependents."
   },
   {
     "id": 14,
-    "capability": ["Statistical Analysis & Analysis ToolPak"],
+    "capability": ["Statistics"],
     "difficulty": "Hard",
     "text": "Describe how to run a linear regression in Excel, interpret R² and p-values, and explain differences between using Analysis ToolPak's Regression and the LINEST function. When would you prefer one approach over the other?"
   },
   {
     "id": 15,
-    "capability": ["What-If Analysis & Solver"],
+    "capability": ["Solver"],
     "difficulty": "Medium",
     "text": "Explain how you'd use Goal Seek and Solver to (a) find break-even price given a cost and demand curve, and (b) optimize product mix to maximize profit subject to resource constraints. Which Solver engine/settings would you choose and why?"
   },
   {
     "id": 16,
-    "capability": [
-      "Performance Optimization & Best Practices",
-      "Power Query (Get & Transform)"
-    ],
+    "capability": ["Performance", "Power Query"],
     "difficulty": "Advanced",
     "text": "A workbook with 500k rows and many volatile formulas is unacceptably slow. List concrete strategies to diagnose and improve performance (calculation mode, replacing volatile functions, query folding, using helper columns, converting heavy formulas to Power Query/Power Pivot, etc.) and explain tradeoffs."
   },
   {
     "id": 17,
-    "capability": ["Security, Sharing & Auditing"],
+    "capability": ["Security"],
     "difficulty": "Medium",
     "text": "Explain differences between protecting a worksheet, protecting workbook structure, and encrypting a file with a password. How does Excel co-authoring interact with protection, and what methods do you use to audit or track changes in shared workbooks?"
   },
   {
     "id": 18,
-    "capability": [
-      "Named Ranges & Structured References",
-      "Basic Formulas & Cell Referencing"
-    ],
+    "capability": ["Tables", "Formulas"],
     "difficulty": "Easy",
     "text": "What are the advantages of Excel Tables and structured references over normal ranges and named ranges? Provide an example formula using structured references that sums a column conditionally."
   },
   {
     "id": 19,
-    "capability": [
-      "Advanced Functions & LAMBDA",
-      "Basic Formulas & Cell Referencing"
-    ],
+    "capability": ["LAMBDA", "Formulas"],
     "difficulty": "Advanced",
     "text": "Create a LAMBDA function (or describe one) that calculates Compound Annual Growth Rate (CAGR) given start value, end value and periods. Explain how to register it via Name Manager for reuse and mention current LAMBDA limitations."
   },
   {
     "id": 20,
-    "capability": [
-      "Integration & Automation (APIs/Power Automate)",
-      "Power Query (Get & Transform)",
-      "Security, Sharing & Auditing"
-    ],
+    "capability": ["Power Query", "Automation", "Security"],
     "difficulty": "Hard",
     "text": "You need to automate importing JSON data from a secured REST API into Excel every morning, transform it and push results to a SharePoint folder. Outline an end-to-end solution using Power Query, authentication (OAuth/API key), scheduling options (Power Automate/Task Scheduler), and security considerations."
   }
