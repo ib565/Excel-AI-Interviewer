@@ -18,9 +18,12 @@ def ensure_app_dirs() -> None:
         directory.mkdir(parents=True, exist_ok=True)
 
 
-def get_session_log_path(session_id: str) -> str:
+def get_session_log_path(session_id: str, timestamp: str = None) -> str:
     """Return absolute log file path for a session id."""
-    return str(LOGS_DIR / f"{session_id}.log")
+    if timestamp:
+        return str(LOGS_DIR / f"{timestamp}_{session_id}.log")
+    else:
+        return str(LOGS_DIR / f"{session_id}.log")
 
 
 def get_session_transcript_path(session_id: str) -> str:

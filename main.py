@@ -40,8 +40,11 @@ def _get_logger() -> logging.Logger:
     logger = logging.getLogger(f"session.{st.session_state.session_id}")
     if not logger.handlers:
         logger.setLevel(logging.INFO)
+        # Create timestamp for filename sorting (ISO format without colons)
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         fh = logging.FileHandler(
-            get_session_log_path(st.session_state.session_id), encoding="utf-8"
+            get_session_log_path(st.session_state.session_id, timestamp),
+            encoding="utf-8",
         )
         formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
         fh.setFormatter(formatter)
