@@ -31,13 +31,3 @@ class Question(BaseModel):
     capability: List[str]  # Changed to List[str] to match JSON structure
     difficulty: str
     text: str
-
-
-class InterviewState(BaseModel):
-    """Tracks the current state of an interview session."""
-
-    session_id: str
-    used_question_ids: List[str] = []
-    current_difficulty_level: str = "Easy"
-    candidate_skill_level: str = "Beginner"
-    question_count: int = 0
