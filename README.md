@@ -1,50 +1,68 @@
-Excel Interviewer AI (PoC)
-
-A minimal Streamlit app scaffold where an external AI module (Gemini later) will drive the interview logic. Ships with a built-in local stub so you can test end-to-end.
-
-What works now
-- Enter self-assessment and start a session
-- Send a chat message
-- Receive a canned assistant reply (local stub)
-- Transcript saved as JSONL per session under `transcripts/`
-- Log file per session under `logs/`
-- Download transcript
-
-Structure
-- `app/` Streamlit UI
-- `core/` Pydantic models and AI adapter bridge
-- `storage/` Transcript helpers (JSONL)
-- `data/` Tiny sample question bank (optional)
-- `config.py` Paths and setup helpers
-
-Run locally (Windows PowerShell)
-1. Ensure your venv is activated
-2. Install deps and run Streamlit:
-```
-cd "C:\Users\ishui\Desktop\2ExcelInterviewerAI"
-.\venv\\Scripts\\Activate.ps1
-python -m pip install --upgrade pip
-pip install streamlit pydantic python-dotenv
-streamlit run app\\main.py
-```
-
-Plug in your AI later
-Create `ai/adapter.py` with a `get_adapter()` that returns an object implementing:
-```
-def generate_reply(messages: list[Message], state: dict | None = None) -> AIResponse
-```
-If `ai.adapter` is missing, the app uses a built-in local echo stub.
-
-Transcript format (JSONL)
-Each line is a JSON object with `type: "message"` or `type: "event"`.
-```
-{"type":"message","session_id":"...","timestamp":"...","role":"user","content":"hi"}
-{"type":"message","session_id":"...","timestamp":"...","role":"assistant","content":"Stub reply...","metadata":{"adapter":"local_echo_stub"}}
-{"type":"event","session_id":"...","timestamp":"...","event":"end"}
-```
-
-Notes
-- No rule-based selection or scoring in the app. The AI will decide later.
-- The question bank is optional and passed to the AI via `state`.
+Excel Interviewer — AI‑first Mock Interviewer (PoC)
 
 
+A conversational, LLM‑driven mock interviewer that assesses Excel skills.
+
+Designed as a lightweight PoC: Streamlit front end + Python orchestration, with Gemini (or another structured LLM) handling question generation, evaluation, and conversational behavior.
+
+Quick summary
+
+
+- LLM‑first: the model drives conversation, personalizes questions, and grades
+
+answers using structured outputs.
+
+- Retrieval‑first: pick questions from a small bank; fall back to controlled
+
+generation if no match.
+
+- Conversational: starts with a self‑assessment, adapts difficulty, asks clarifying
+
+follow‑ups when grading confidence is low, then summarizes performance.
+
+- PoC scope: no full Excel engine — formula answers are judged by LLM rubric +
+
+mental checks. Transcripts saved locally.
+
+Why this approach
+
+
+- Fast to build and iterate (Streamlit).
+
+- Human‑like interview experience driven by the LLM.
+
+- Controlled generation + validation for stability.
+
+- Structured outputs and Gemini function calling ensure predictable
+
+machine‑readable results (scores, follow‑ups, next action).
+
+Core features
+
+
+- Self‑assessment kickoff that guides personalization.
+
+- Retrieve‑from‑bank (preferred) then generate question fallback.
+
+- LLM evaluation returning structured JSON: per‑criterion scores,
+
+total (0–5), confidence and short advice.
+
+- Follow‑up probing when confidence is low or score is borderline.
+
+- Session transcript + final summary (per‑capability subscores and tips).
+
+- Cap on generated questions per interview (e.g., ≤ 2) for stability.
+
+Tech stack
+
+
+- Python
+
+- Streamlit (UI + orchestration)
+
+- Pydantic for schemas (Question, AnswerSpec, Evaluation, AssistantMessage)
+
+- Gemini (or equivalent) for LLM with function calling / structured outputs
+
+- Local JSON/JSONL for bank and transcript storage
