@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, List
 from uuid import uuid4
 
@@ -11,18 +9,13 @@ import streamlit as st
 
 from config import (
     APP_NAME,
-    LOGS_DIR,
-    QUESTION_BANK_PATH,
     ensure_app_dirs,
-    get_session_log_path,
-    get_session_transcript_path,
 )
 from core.bridge import load_ai_agent
 from core.models import AIResponseWrapped, Message
 from storage.transcripts import save_event_line, save_message_line
 from storage.question_bank import get_question_bank
 
-# Simple logging configuration - focus on key events only
 logging.basicConfig(
     level=logging.WARNING,  # Only show warnings and above
     format="%(asctime)s | %(message)s",
@@ -55,7 +48,6 @@ def _init_session_state() -> None:
 
 
 def _get_logger() -> logging.Logger:
-    # Simple session logger - uses the basic config above
     return logging.getLogger(f"session.{st.session_state.session_id}")
 
 
@@ -234,7 +226,7 @@ def main() -> None:
             response: AIResponseWrapped = agent.generate_reply(
                 _to_model_messages(st.session_state.messages), state
             )
-        except Exception as e:
+        except Exception:
             response = AIResponseWrapped(text="Agent error: using fallback reply.")
 
         _append_message("assistant", response.text, metadata=response.metadata)
@@ -257,7 +249,7 @@ def main() -> None:
                         "evaluation_generated",
                         details=None,
                     )
-                except Exception as e:
+                except Exception:
                     st.session_state.performance_summary = (
                         "## Performance Evaluation Error\n\n"
                         "We encountered an error while generating the performance summary. "

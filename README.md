@@ -170,7 +170,7 @@ Create a `.env` file in the project root:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
-MODEL=gemini-1.5-flash  # or gemini-1.5-pro
+MODEL=gemini-2.5-flash  # or gemini-2.5-pro
 ```
 
 ### 3. Run the Application
@@ -245,7 +245,6 @@ ExcelInterviewerAI/
 │   └── question_bank.json # Question database
 ├── logs/                  # Application logs
 ├── transcripts/           # Interview transcripts
-├── DESIGN_DOCUMENT.md     # Technical design document
 └── README.md             # This file
 ```
 

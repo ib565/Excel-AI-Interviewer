@@ -30,11 +30,8 @@ class GeminiAgent:
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         self.model = os.getenv("MODEL")
-        # Get access to the question bank
         self.question_bank = get_question_bank()
-        # Track used questions in this session
         self._used_question_ids: Set[str] = set()
-        # Set up logger
         self.logger = logging.getLogger(
             "ai.agent.gemini"
         )  # Register available tools for function calling
