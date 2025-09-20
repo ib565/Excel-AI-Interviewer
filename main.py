@@ -32,6 +32,8 @@ def _init_session_state() -> None:
         st.session_state.messages = []
     if "ended" not in st.session_state:
         st.session_state.ended = False
+    if "turn_index" not in st.session_state:
+        st.session_state.turn_index = 0
 
 
 def _get_logger() -> logging.Logger:
@@ -54,6 +56,7 @@ def _append_message(
         role=role,
         content=content,
         timestamp=datetime.now(timezone.utc),
+        turn_index=st.session_state.turn_index,
         metadata=metadata,
     )
     st.session_state.messages.append(msg.model_dump())
@@ -61,8 +64,10 @@ def _append_message(
         session_id=st.session_state.session_id,
         role=role,
         content=content,
+        turn_index=st.session_state.turn_index,
         metadata=metadata,
     )
+    st.session_state.turn_index += 1
 
 
 def _render_header() -> None:
@@ -107,6 +112,7 @@ def _restart_session() -> None:
     st.session_state.session_id = str(uuid4())
     st.session_state.messages = []
     st.session_state.ended = False
+    st.session_state.turn_index = 0
 
 
 def _transcript_download() -> None:
