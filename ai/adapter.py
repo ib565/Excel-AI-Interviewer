@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Set
+import re
+from typing import Any, Dict, List, Optional, Set, Tuple
 from google import genai
-from core.models import AIResponseWrapped, Message, Question, AIResponse
+from google.genai import types
+from core.models import AIResponseWrapped, Message, Question
 from core.bridge import AIAdapter
 from storage.question_bank import get_question_bank
 from dotenv import load_dotenv
@@ -23,13 +25,56 @@ class GeminiAdapter:
 
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-        self.model = "gemini-2.0-flash"
+        self.model = "gemini-2.5-flash"
         # Get access to the question bank
         self.question_bank = get_question_bank()
         # Track used questions in this session
         self._used_question_ids: Set[str] = set()
         # Set up logger
         self.logger = logging.getLogger("ai.adapter.gemini")
+
+        def get_next_question(
+            capabilities: List[str] = None,
+            difficulty: str = None,
+        ) -> Dict[str, Any]:
+            """Retrieve the next question from the local bank.
+
+            This function automatically avoids repeating questions within the current session.
+
+            Args:
+                capabilities: Optional list of capabilities to target (e.g., ["Formulas", "Pivot Tables"]).
+                difficulty: Optional difficulty filter (e.g., "Easy", "Medium", "Hard", "Advanced").
+
+            Returns:
+                A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
+            """
+            print("in get_next_question")
+            print(capabilities)
+            print(difficulty)
+            question = self._retrieve_question(
+                capabilities=capabilities, difficulty=difficulty
+            )
+            if question is None:
+                return {
+                    "id": "",
+                    "text": "No more suitable questions are available.",
+                    "difficulty": difficulty or "",
+                    "capabilities": capabilities or [],
+                }
+
+            # Mark question as used immediately to avoid repeats
+            if question.id:
+                self._used_question_ids.add(question.id)
+
+            return {
+                "id": question.id,
+                "text": question.text,
+                "difficulty": question.difficulty,
+                "capabilities": question.capabilities,
+            }
+
+        # Register available tools for function calling
+        self._tools = [get_next_question]
 
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
@@ -58,14 +103,11 @@ class GeminiAdapter:
         )
 
         try:
-            # Call Gemini API
+            # Call Gemini API with function-calling tools (no structured outputs)
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=full_prompt,
-                config={
-                    "response_mime_type": "application/json",
-                    "response_schema": AIResponse,
-                },
+                config=types.GenerateContentConfig(tools=self._tools),
             )
 
             # Log the raw API response
@@ -74,17 +116,24 @@ class GeminiAdapter:
                 json.dumps(response.model_dump(), indent=2, default=str),
             )
 
-            response_parsed = response.parsed
-
             # Extract response text
-            reply_text = response_parsed.text.strip()
+            reply_text_raw: str = getattr(response, "text", "").strip()
 
-            # Check if interview should end based on context
-            should_end = response_parsed.end or self._should_end_interview(messages)
+            # Parse flags from the response tail and clean them from user-visible text
+            cleaned_text, end_flag, question_id_from_flags = (
+                self._parse_flags_and_clean_text(reply_text_raw)
+            )
+
+            # If model explicitly referenced a question id, track it
+            if question_id_from_flags:
+                self._used_question_ids.add(question_id_from_flags)
+
+            # Determine end condition using flag or heuristic
+            should_end = bool(end_flag) or self._should_end_interview(messages)
 
             # Create the wrapped response
             wrapped_response = AIResponseWrapped(
-                text=reply_text,
+                text=cleaned_text,
                 metadata={
                     "adapter": "gemini",
                     "model": self.model,
@@ -92,6 +141,7 @@ class GeminiAdapter:
                         "total_tokens", 0
                     ),
                     "questions_used": len(self._used_question_ids),
+                    "question_id": question_id_from_flags,
                 },
                 end=should_end,
             )
@@ -99,17 +149,14 @@ class GeminiAdapter:
             # Log the final wrapped response details
             self.logger.info(
                 "LLM_RESPONSE | text=%s | end=%s | tokens_used=%s | metadata=%s",
-                reply_text,
+                cleaned_text,
                 should_end,
                 wrapped_response.metadata.get("tokens_used", 0),
                 json.dumps(wrapped_response.metadata, default=str),
             )
 
-            # Log the parsed response object details
-            self.logger.debug(
-                "LLM_PARSED_RESPONSE | %s",
-                json.dumps(response_parsed.model_dump(), indent=2),
-            )
+            # Log the raw text for debugging
+            self.logger.debug("LLM_TEXT | %s", reply_text_raw)
 
             return wrapped_response
 
@@ -154,20 +201,20 @@ class GeminiAdapter:
         """Build a system prompt based on the interview state."""
 
         # Base system prompt
-        prompt = """You are an expert Excel interviewer conducting a mock interview.
-        Your goal is to assess the candidate's Excel skills through conversation.
-
-        Guidelines:
-        - Ask specific, technical Excel questions from the provided question bank
-        - Follow up on their answers with clarifying questions
-        - Be conversational but professional
-        - End the interview after max 10 questions or when appropriate
-
-        When selecting questions:
-        - Start with easier questions and progress to harder ones
-        - Choose questions that build on the candidate's previous answers
-        - Avoid repeating questions within the same interview
-        """
+        prompt = (
+            "You are an expert Excel interviewer conducting a mock interview.\n"
+            "Your goal is to assess the candidate's Excel skills through conversation.\n\n"
+            "Guidelines:\n"
+            "- Ask specific, technical Excel questions using the available tool when needed.\n"
+            "- Follow up on their answers with clarifying questions.\n"
+            "- Be conversational but professional.\n"
+            "- End the interview after max 10 questions or when appropriate.\n\n"
+            "Tool-use contract:\n"
+            "- When you need a new question, CALL the function get_next_question(capabilities?, difficulty?).\n"
+            "- After composing your reply for the candidate, append a single flags line EXACTLY in this form: \n"
+            "  [[END=<true|false> QID=<question_id or none>]]\n"
+            "- Do not include the flags in the visible body of your message; put them only at the very end.\n\n"
+        )
 
         # Add question bank context
         question_count = self.question_bank.get_question_count()
@@ -175,28 +222,21 @@ class GeminiAdapter:
             available_capabilities = self.question_bank.get_available_capabilities()
             available_difficulties = self.question_bank.get_available_difficulties()
 
-            prompt += f"""
-            
-Available questions: {question_count}
-Capabilities: {', '.join(available_capabilities)}
-Difficulty levels: {', '.join(available_difficulties)}
-
-Select appropriate questions based on:
-- The candidate's demonstrated skill level
-- Previous conversation context
-- Question difficulty progression
-- Available question variety
-"""
+            prompt += (
+                f"Available questions: {question_count}\n"
+                f"Capabilities: {', '.join(available_capabilities)}\n"
+                f"Difficulty levels: {', '.join(available_difficulties)}\n\n"
+                "Selection guidance:\n"
+                "- Start with easier questions and progress to harder ones.\n"
+                "- Choose questions that build on the candidate's previous answers.\n"
+                "- Avoid repeating questions within the same interview.\n"
+            )
 
         # Add context from state if available
         if state:
             session_id = state.get("session_id")
             if session_id:
                 prompt += f"\n- Session ID: {session_id}"
-
-        prompt = """You are an Excel Interviewer conducting an interview.
-        Your goal is to assess the candidate's Excel skills through conversation.
-        """
 
         return prompt
 
@@ -220,11 +260,39 @@ Select appropriate questions based on:
         self, capabilities: Optional[List[str]] = None, difficulty: Optional[str] = None
     ) -> Optional[Question]:
         """Retrieve a question from the question bank."""
+        print("retrieve_question")
         return self.question_bank.select_random_question(
             exclude_ids=self._used_question_ids,
             capabilities=capabilities,
             difficulty=difficulty,
         )
+
+    def _parse_flags_and_clean_text(self, text: str) -> Tuple[str, bool, Optional[str]]:
+        """Extract end/QID flags from the response tail and return cleaned text.
+
+        The protocol expects a trailing token like: [[END=true QID=123]]
+        Returns (cleaned_text, end_flag, question_id)
+        """
+        if not text:
+            return "", False, None
+
+        # Regex to capture flags block at the end
+        flags_pattern = re.compile(
+            r"\s*\[\[\s*END\s*=\s*(true|false)\s+QID\s*=\s*([^\]]+)\s*\]\]\s*$",
+            re.IGNORECASE,
+        )
+        match = flags_pattern.search(text)
+        if not match:
+            return text, False, None
+
+        end_str = match.group(1).lower()
+        qid_raw = match.group(2).strip()
+        end_flag = end_str == "true"
+        question_id = None if qid_raw in {"none", "", "null"} else qid_raw
+
+        # Remove the flags block from the text
+        cleaned = text[: match.start()].rstrip()
+        return cleaned, end_flag, question_id
 
 
 def get_adapter() -> AIAdapter:
