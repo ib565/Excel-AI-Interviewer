@@ -23,7 +23,7 @@ class GeminiAdapter:
 
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-        self.model = "gemini-2.5-flash"
+        self.model = os.getenv("MODEL")
         # Get access to the question bank
         self.question_bank = get_question_bank()
         # Track used questions in this session
@@ -105,7 +105,9 @@ class GeminiAdapter:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=full_prompt,
-                config=types.GenerateContentConfig(tools=[self.get_next_question]),
+                config=types.GenerateContentConfig(
+                    tools=[self.get_next_question, self.generate_question]
+                ),
             )
 
             # Log the raw API response
@@ -206,9 +208,11 @@ class GeminiAdapter:
             "- Ask specific, technical Excel questions using the available tool when needed.\n"
             "- Follow up on their answers with clarifying questions.\n"
             "- Be conversational but professional.\n"
-            "- End the interview after max 10 questions or when appropriate.\n\n"
+            "- End the interview after max 5 questions or when appropriate. Your last message should be a comprehensive summary of the interview with the flag [[END=true QID=none]]\n\n"
             "Tool-use contract:\n"
-            "- When you need a new question, CALL the function get_next_question(capabilities?, difficulty?).\n"
+            "- When you need a new question from the bank, CALL get_next_question(capabilities?, difficulty?).\n"
+            "- If the bank has no suitable question (i.e., the tool returns an empty id or the text 'No more suitable questions are available.'), then make ANOTHER TOOL CALL to generate_question(capabilities?, difficulty?, additional_notes?).\n"
+            "  Provide 'additional_notes' as a short phrase that to guide the question generation).\n"
             "- After composing your reply for the candidate, append a single flags line EXACTLY in this form: \n"
             "  [[END=<true|false> QID=<question_id or none>]]\n"
             "- Do not include the flags in the visible body of your message; put them only at the very end.\n\n"
@@ -264,6 +268,190 @@ class GeminiAdapter:
             capabilities=capabilities,
             difficulty=difficulty,
         )
+
+    def generate_question(
+        self,
+        capabilities: Optional[List[str]] = None,
+        difficulty: Optional[str] = None,
+        additional_notes: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Generate a brand-new Excel interview question via LLM and save it.
+
+        Args:
+            capabilities: Optional list of target capabilities (e.g., ["Formulas", "Pivot Tables"]).
+            difficulty: Optional difficulty filter (e.g., "Easy", "Medium", "Hard", "Advanced").
+            additional_notes: Optional brief guidance on what to emphasize.
+
+        Returns:
+            A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
+        """
+        try:
+            # Compose generation prompt and call LLM separately
+            gen_payload = self._generate_question_via_llm(
+                capabilities=capabilities,
+                difficulty=difficulty,
+                additional_notes=additional_notes,
+            )
+
+            # Normalize fields
+            text_raw = str(gen_payload.get("text", "")).strip()
+            if not text_raw:
+                raise ValueError("Generated question text is empty")
+
+            gen_caps = gen_payload.get("capabilities", capabilities or [])
+            if isinstance(gen_caps, str):
+                # Split on comma/pipe
+                gen_caps = [c.strip() for c in re.split(r",|\|", gen_caps) if c.strip()]
+            if not isinstance(gen_caps, list):
+                gen_caps = list(gen_caps)  # best-effort
+            gen_caps = [str(c).strip() for c in gen_caps if str(c).strip()]
+
+            gen_diff = str(
+                gen_payload.get("difficulty") or (difficulty or "Medium")
+            ).strip()
+            eval_criteria = gen_payload.get("evaluation_criteria") or []
+            if isinstance(eval_criteria, str):
+                # Split string into list if needed
+                eval_criteria = [
+                    s.strip() for s in re.split(r"\n|,|\|", eval_criteria) if s.strip()
+                ]
+            if not isinstance(eval_criteria, list):
+                eval_criteria = list(eval_criteria)
+            eval_criteria = [str(e).strip() for e in eval_criteria if str(e).strip()]
+
+            # Persist to the question bank with a predicted new id
+            new_id = self._compute_next_question_id()
+            saved = self.question_bank.add_question(
+                text=text_raw,
+                capabilities=gen_caps,
+                difficulty=gen_diff,
+                question_id=new_id,
+                evaluation_criteria=eval_criteria,
+            )
+
+            if not saved:
+                # Attempt once more with auto-id
+                fallback_save = self.question_bank.add_question(
+                    text=text_raw,
+                    capabilities=gen_caps,
+                    difficulty=gen_diff,
+                    question_id=None,
+                    evaluation_criteria=eval_criteria,
+                )
+                if fallback_save:
+                    # Best effort to determine id: use max numeric id
+                    new_id = self._compute_highest_numeric_id()
+                else:
+                    # As a last resort, return a non-persistent question
+                    new_id = ""
+
+            if new_id:
+                self._used_question_ids.add(new_id)
+
+            return {
+                "id": new_id,
+                "text": text_raw,
+                "difficulty": gen_diff,
+                "capabilities": gen_caps,
+            }
+
+        except Exception as e:
+            self.logger.error("GENERATE_QUESTION_ERROR | %s", str(e))
+            return {
+                "id": "",
+                "text": "Unable to generate a new question at this time.",
+                "difficulty": difficulty or "",
+                "capabilities": capabilities or [],
+            }
+
+    def _generate_question_via_llm(
+        self,
+        capabilities: Optional[List[str]],
+        difficulty: Optional[str],
+        additional_notes: Optional[str],
+    ) -> Dict[str, Any]:
+        """Call the LLM to produce a new question JSON with evaluation criteria."""
+        caps_str = ", ".join(capabilities or [])
+        notes = additional_notes.strip() if additional_notes else ""
+        diff = difficulty or "Medium"
+
+        instruction = (
+            "You are generating a single, clear Excel interview question.\n"
+            "Requirements:\n"
+            "- Target capabilities: "
+            + (caps_str if caps_str else "(use sensible Excel capability)")
+            + "\n"
+            "- Difficulty: " + diff + "\n"
+            "- Additional notes: " + (notes if notes else "none") + "\n\n"
+            "Output STRICTLY a compact JSON object with keys: \n"
+            "  text (string), capabilities (array of strings), difficulty (string), evaluation_criteria (array of strings).\n"
+            "- Do not include markdown fences or commentary.\n"
+            "- The question should be answerable conversationally and focused on Excel.\n"
+            "- The question should be general and reusable for multiple candidates."
+            "- Provide 3-6 evaluation_criteria that are specific and observable.\n"
+        )
+
+        self.logger.debug("LLM_REQUEST_GENERATE_QUESTION | %s", instruction)
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=instruction,
+            config=types.GenerateContentConfig(),
+        )
+
+        raw_text = getattr(response, "text", "").strip()
+        self.logger.debug("LLM_RAW_RESPONSE_GENERATE_QUESTION | %s", raw_text)
+
+        # Strip code fences if present
+        cleaned = raw_text
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`\n ")
+            # If there is a language tag, drop the first line
+            if "\n" in cleaned:
+                first_line, rest = cleaned.split("\n", 1)
+                if not first_line.strip().startswith("{"):
+                    cleaned = rest.strip()
+
+        # Attempt to extract JSON substring
+        json_str = cleaned
+        start = json_str.find("{")
+        end = json_str.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            json_str = json_str[start : end + 1]
+
+        try:
+            payload = json.loads(json_str)
+            if not isinstance(payload, dict):
+                raise ValueError("Non-object JSON returned")
+            return payload
+        except Exception as parse_err:
+            self.logger.error("PARSE_GENERATE_QUESTION_JSON_ERROR | %s", str(parse_err))
+            # Best-effort fallback: wrap as minimal payload
+            return {
+                "text": cleaned if cleaned else "",
+                "capabilities": capabilities or [],
+                "difficulty": diff,
+                "evaluation_criteria": [],
+            }
+
+    def _compute_next_question_id(self) -> str:
+        """Compute the next numeric question id based on current bank."""
+        ids: List[int] = []
+        for q in self.question_bank.get_all_questions():
+            try:
+                ids.append(int(q.id))
+            except Exception:
+                continue
+        next_id = (max(ids) + 1) if ids else 1
+        return str(next_id)
+
+    def _compute_highest_numeric_id(self) -> str:
+        ids: List[int] = []
+        for q in self.question_bank.get_all_questions():
+            try:
+                ids.append(int(q.id))
+            except Exception:
+                continue
+        return str(max(ids) if ids else 0)
 
     def _parse_flags_and_clean_text(self, text: str) -> Tuple[str, bool, Optional[str]]:
         """Extract end/QID flags from the response tail and return cleaned text.

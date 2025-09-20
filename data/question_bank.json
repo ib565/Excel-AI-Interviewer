@@ -1,7 +1,9 @@
 [
   {
-    "id": 1,
-    "capabilities": ["Formulas"],
+    "id": "1",
+    "capabilities": [
+      "Formulas"
+    ],
     "difficulty": "Easy",
     "text": "Explain the difference between relative, absolute and mixed references. Give an example formula that behaves differently when copied across cells and explain why.",
     "evaluation_criteria": [
@@ -12,8 +14,10 @@
     ]
   },
   {
-    "id": 2,
-    "capabilities": ["Lookups"],
+    "id": "2",
+    "capabilities": [
+      "Lookups"
+    ],
     "difficulty": "Medium",
     "text": "Compare VLOOKUP, INDEX+MATCH, and XLOOKUP: when would you choose each? Describe a scenario where VLOOKUP fails and show how you'd fix it.",
     "evaluation_criteria": [
@@ -24,8 +28,11 @@
     ]
   },
   {
-    "id": 3,
-    "capabilities": ["Lookups", "Dynamic arrays"],
+    "id": "3",
+    "capabilities": [
+      "Lookups",
+      "Dynamic arrays"
+    ],
     "difficulty": "Hard",
     "text": "How would you perform a lookup with multiple criteria (e.g., find Sales for Product=A and Region=B) using formulas only? Provide at least two approaches — one using dynamic array functions and one compatible with older Excel.",
     "evaluation_criteria": [
@@ -36,8 +43,10 @@
     ]
   },
   {
-    "id": 4,
-    "capabilities": ["Pivots"],
+    "id": "4",
+    "capabilities": [
+      "Pivots"
+    ],
     "difficulty": "Medium",
     "text": "Design a PivotTable (describe fields, layout and steps) to show monthly revenue by product and also display the Top 3 products per month.",
     "evaluation_criteria": [
@@ -48,8 +57,10 @@
     ]
   },
   {
-    "id": 5,
-    "capabilities": ["Power Query"],
+    "id": "5",
+    "capabilities": [
+      "Power Query"
+    ],
     "difficulty": "Hard",
     "text": "You receive multiple CSV files with slightly different column names and mixed date formats. Describe a robust Power Query workflow to combine, normalize column names and date formats, handle errors, and load a clean table ready for analysis.",
     "evaluation_criteria": [
@@ -61,8 +72,10 @@
     ]
   },
   {
-    "id": 6,
-    "capabilities": ["Data modeling"],
+    "id": "6",
+    "capabilities": [
+      "Data modeling"
+    ],
     "difficulty": "Advanced",
     "text": "Write (or describe) a DAX measure to calculate a rolling 12-month sales total that correctly handles sparse months and filter context. Explain how you'd validate that measure against a simple SUM.",
     "evaluation_criteria": [
@@ -73,8 +86,11 @@
     ]
   },
   {
-    "id": 7,
-    "capabilities": ["VBA", "Error handling"],
+    "id": "7",
+    "capabilities": [
+      "VBA",
+      "Error handling"
+    ],
     "difficulty": "Hard",
     "text": "Write (or outline) a VBA macro that loops through every worksheet in a workbook, finds all formulas in columns A:C and replaces them with their current values. Explain how you'd add error handling, logging and a safe-undo/backup strategy.",
     "evaluation_criteria": [
@@ -86,8 +102,11 @@
     ]
   },
   {
-    "id": 8,
-    "capabilities": ["Conditional formatting", "Dates & times"],
+    "id": "8",
+    "capabilities": [
+      "Conditional formatting",
+      "Dates & times"
+    ],
     "difficulty": "Medium",
     "text": "How would you use a single conditional formatting rule to highlight entire rows where the Due Date is within the next 7 days and the Status column is blank? Provide the formula you'd use and explain application scope.",
     "evaluation_criteria": [
@@ -98,8 +117,11 @@
     ]
   },
   {
-    "id": 9,
-    "capabilities": ["Charts", "Tables"],
+    "id": "9",
+    "capabilities": [
+      "Charts",
+      "Tables"
+    ],
     "difficulty": "Medium",
     "text": "Explain how to create a dynamic chart that updates when a user selects a month from a drop-down. Describe two methods: one using named dynamic ranges and one using Excel Tables/structured references (and which you prefer).",
     "evaluation_criteria": [
@@ -110,8 +132,10 @@
     ]
   },
   {
-    "id": 10,
-    "capabilities": ["Data cleaning"],
+    "id": "10",
+    "capabilities": [
+      "Data cleaning"
+    ],
     "difficulty": "Medium",
     "text": "Given a column of inconsistent email entries and phone numbers, describe the formulas and Excel features you'd use to (a) extract domain names from emails, (b) standardize phone numbers to +CC-XXXXXXXXXX format, and (c) detect/remove invalid entries.",
     "evaluation_criteria": [
@@ -122,8 +146,10 @@
     ]
   },
   {
-    "id": 11,
-    "capabilities": ["Dates & times"],
+    "id": "11",
+    "capabilities": [
+      "Dates & times"
+    ],
     "difficulty": "Medium",
     "text": "How would you calculate exact tenure between Hire Date and End Date as 'Y years, M months, D days'? How would you calculate total business days of tenure excluding a given set of public holidays?",
     "evaluation_criteria": [
@@ -134,8 +160,11 @@
     ]
   },
   {
-    "id": 12,
-    "capabilities": ["Dynamic arrays", "Lookups"],
+    "id": "12",
+    "capabilities": [
+      "Dynamic arrays",
+      "Lookups"
+    ],
     "difficulty": "Hard",
     "text": "Using dynamic array functions (UNIQUE, FILTER, SORT, INDEX) produce the top 5 salespeople by total sales for a selected region showing name and total. Then describe how to achieve the same result in legacy Excel without dynamic arrays.",
     "evaluation_criteria": [
@@ -146,8 +175,10 @@
     ]
   },
   {
-    "id": 13,
-    "capabilities": ["Error handling"],
+    "id": "13",
+    "capabilities": [
+      "Error handling"
+    ],
     "difficulty": "Easy",
     "text": "What steps and functions do you use to handle and debug common formula errors (#N/A, #REF!, #VALUE!, #DIV/0!)? Give examples of when to use IFERROR vs IFNA and how to trace precedents/dependents.",
     "evaluation_criteria": [
@@ -158,8 +189,10 @@
     ]
   },
   {
-    "id": 14,
-    "capabilities": ["Statistics"],
+    "id": "14",
+    "capabilities": [
+      "Statistics"
+    ],
     "difficulty": "Hard",
     "text": "Describe how to run a linear regression in Excel, interpret R² and p-values, and explain differences between using Analysis ToolPak's Regression and the LINEST function. When would you prefer one approach over the other?",
     "evaluation_criteria": [
@@ -170,8 +203,10 @@
     ]
   },
   {
-    "id": 15,
-    "capabilities": ["Solver"],
+    "id": "15",
+    "capabilities": [
+      "Solver"
+    ],
     "difficulty": "Medium",
     "text": "Explain how you'd use Goal Seek and Solver to (a) find break-even price given a cost and demand curve, and (b) optimize product mix to maximize profit subject to resource constraints. Which Solver engine/settings would you choose and why?",
     "evaluation_criteria": [
@@ -182,8 +217,11 @@
     ]
   },
   {
-    "id": 16,
-    "capabilities": ["Performance", "Power Query"],
+    "id": "16",
+    "capabilities": [
+      "Performance",
+      "Power Query"
+    ],
     "difficulty": "Advanced",
     "text": "A workbook with 500k rows and many volatile formulas is unacceptably slow. List concrete strategies to diagnose and improve performance (calculation mode, replacing volatile functions, query folding, using helper columns, converting heavy formulas to Power Query/Power Pivot, etc.) and explain tradeoffs.",
     "evaluation_criteria": [
@@ -195,8 +233,10 @@
     ]
   },
   {
-    "id": 17,
-    "capabilities": ["Security"],
+    "id": "17",
+    "capabilities": [
+      "Security"
+    ],
     "difficulty": "Medium",
     "text": "Explain differences between protecting a worksheet, protecting workbook structure, and encrypting a file with a password. How does Excel co-authoring interact with protection, and what methods do you use to audit or track changes in shared workbooks?",
     "evaluation_criteria": [
@@ -207,8 +247,11 @@
     ]
   },
   {
-    "id": 18,
-    "capabilities": ["Tables", "Formulas"],
+    "id": "18",
+    "capabilities": [
+      "Tables",
+      "Formulas"
+    ],
     "difficulty": "Easy",
     "text": "What are the advantages of Excel Tables and structured references over normal ranges and named ranges? Provide an example formula using structured references that sums a column conditionally.",
     "evaluation_criteria": [
@@ -219,8 +262,11 @@
     ]
   },
   {
-    "id": 19,
-    "capabilities": ["LAMBDA", "Formulas"],
+    "id": "19",
+    "capabilities": [
+      "LAMBDA",
+      "Formulas"
+    ],
     "difficulty": "Advanced",
     "text": "Create a LAMBDA function (or describe one) that calculates Compound Annual Growth Rate (CAGR) given start value, end value and periods. Explain how to register it via Name Manager for reuse and mention current LAMBDA limitations.",
     "evaluation_criteria": [
@@ -231,8 +277,12 @@
     ]
   },
   {
-    "id": 20,
-    "capabilities": ["Power Query", "Automation", "Security"],
+    "id": "20",
+    "capabilities": [
+      "Power Query",
+      "Automation",
+      "Security"
+    ],
     "difficulty": "Hard",
     "text": "You need to automate importing JSON data from a secured REST API into Excel every morning, transform it and push results to a SharePoint folder. Outline an end-to-end solution using Power Query, authentication (OAuth/API key), and scheduling options (Power Automate/Task Scheduler), and security considerations.",
     "evaluation_criteria": [
@@ -240,6 +290,37 @@
       "Transforms JSON; handles pagination/schema drift; try/otherwise",
       "Schedules refresh (Power Automate or Task Scheduler/PowerShell)",
       "Security: least privilege, secret rotation, avoid hardcoding, protect files"
+    ]
+  },
+  {
+    "id": "21",
+    "capabilities": [
+      "Formulas",
+      "Lookups"
+    ],
+    "difficulty": "Medium",
+    "text": "You have two Excel tables. 'Sales' contains `OrderID`, `ProductID`, and `Quantity`. 'Products' contains `ProductID`, `ProductName`, and `UnitPrice`. Describe the Excel formulas you would use to calculate the total sales revenue for each unique product name.",
+    "evaluation_criteria": [
+      "Explains how to use a lookup function (e.g., VLOOKUP or INDEX/MATCH) to bring either the UnitPrice or ProductName into the Sales table.",
+      "Correctly describes the calculation of a line-item total (Quantity multiplied by UnitPrice).",
+      "Identifies the need to extract or reference unique product names for the final aggregation step.",
+      "Describes the use of SUMIF (or a similar conditional aggregation formula like SUMIFS/SUMPRODUCT) to sum line-item totals based on product name.",
+      "Demonstrates an understanding of the correct arguments and structure for the chosen lookup and aggregation formulas."
+    ]
+  },
+  {
+    "id": "22",
+    "capabilities": [
+      "Formulas"
+    ],
+    "difficulty": "Medium",
+    "text": "You have a list of products with their unique Product IDs and corresponding prices in one table. In a separate sheet, you have a list of Product IDs and need to retrieve their prices. How would you use Excel formulas to do this, and crucially, how would you ensure that if a Product ID is not found, the cell displays 'Product Not Found' instead of an error?",
+    "evaluation_criteria": [
+      "Identifies a lookup function like VLOOKUP, XLOOKUP, or INDEX/MATCH.",
+      "Explains the correct parameters for the chosen lookup function (lookup value, table/range, column/return array, match type).",
+      "Mentions using a wrapper function for error handling (e.g., IFERROR, IFNA).",
+      "Describes how to specify the custom error message 'Product Not Found'.",
+      "Demonstrates understanding of using an exact match for lookups."
     ]
   }
 ]
