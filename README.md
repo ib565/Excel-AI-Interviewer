@@ -34,7 +34,7 @@ This AI-driven system conducts structured Excel interviews through natural conve
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Streamlit UI  │────│   Core Bridge   │────│   AI Agent      │
-│                 │    │  (Protocol)     │    │  (Gemini/Claude)│
+│                 │    │  (Protocol)     │    │  (Gemini)│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
