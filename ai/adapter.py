@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import json
 import os
 from typing import Any, Dict, List, Optional, Set
 from google import genai
-from core.models import AIResponse, Message
+from core.models import AIResponse, Message, Question
 from core.bridge import AIAdapter
 from storage.question_bank import get_question_bank
 from dotenv import load_dotenv
@@ -13,11 +12,7 @@ load_dotenv()
 
 
 class GeminiAdapter:
-    """Gemini-based AI adapter implementing the AIAdapter Protocol.
-
-    This demonstrates how the Protocol pattern allows clean separation
-    between the interface contract and the implementation.
-    """
+    """Gemini-based AI adapter implementing the AIAdapter Protocol."""
 
     @property
     def name(self) -> str:
@@ -25,7 +20,6 @@ class GeminiAdapter:
         return "Gemini AI"
 
     def __init__(self):
-        # Initialize Gemini client (you'd set GEMINI_API_KEY in environment)
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         self.model = "gemini-2.5-flash"
         # Get access to the question bank
