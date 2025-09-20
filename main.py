@@ -22,19 +22,18 @@ from core.models import AIResponseWrapped, Message
 from storage.transcripts import save_event_line, save_message_line
 from storage.question_bank import get_question_bank
 
-# Configure root logger to reduce console clutter for submission
+# Simple logging configuration - focus on key events only
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    level=logging.WARNING,  # Only show warnings and above
+    format="%(asctime)s | %(message)s",
     handlers=[
-        # File handler for all logs
-        logging.FileHandler(LOGS_DIR / "application.log", encoding="utf-8"),
-        # Console handler with reduced verbosity
-        logging.StreamHandler(),
+        logging.StreamHandler(),  # Console output only
     ],
 )
-# Set console handler to WARNING level for cleaner terminal output
-logging.getLogger().handlers[1].setLevel(logging.WARNING)
+
+# Suppress Google Gemini API warnings
+logging.getLogger("google_genai.types").setLevel(logging.ERROR)
+logging.getLogger("google.genai").setLevel(logging.ERROR)
 
 
 st.set_page_config(page_title=APP_NAME, layout="wide")
@@ -56,37 +55,8 @@ def _init_session_state() -> None:
 
 
 def _get_logger() -> logging.Logger:
-    # Get the main session logger
-    logger = logging.getLogger(f"session.{st.session_state.session_id}")
-    if not logger.handlers:
-        logger.setLevel(logging.INFO)
-        # Create timestamp for filename sorting (ISO format without colons)
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        fh = logging.FileHandler(
-            get_session_log_path(st.session_state.session_id, timestamp),
-            encoding="utf-8",
-        )
-        formatter = logging.Formatter(
-            "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-        )
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-
-        # Console handler with reduced verbosity for clean terminal output
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.WARNING)  # Only show warnings and errors in console
-        ch.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-        logger.addHandler(ch)
-
-        # Set up the AI agent logger with file-only logging
-        ai_logger = logging.getLogger("ai.agent.gemini")
-        if not ai_logger.handlers:
-            ai_logger.setLevel(logging.INFO)  # Reduced from DEBUG for cleaner output
-            ai_logger.addHandler(fh)  # Use the same file handler
-            # Remove console handler for AI agent to reduce terminal clutter
-            ai_logger.propagate = False  # Prevent duplicate logs
-
-    return logger
+    # Simple session logger - uses the basic config above
+    return logging.getLogger(f"session.{st.session_state.session_id}")
 
 
 def _append_message(
@@ -238,18 +208,12 @@ def main() -> None:
 
     # Only show startup message once per session
     if "startup_logged" not in st.session_state:
-        logger = _get_logger()
         agent = load_ai_agent()
         agent_name = agent.name
-
-        # Log startup info for submission visibility
-        print(f"🚀 Excel Interviewer AI started successfully with agent: {agent_name}")
-        logger.info("Application started with agent: %s", agent_name)
         st.session_state.startup_logged = True
         st.session_state.agent = agent
         st.session_state.agent_name = agent_name
     else:
-        logger = _get_logger()
         agent = st.session_state.agent
         agent_name = st.session_state.agent_name
 
@@ -261,7 +225,6 @@ def main() -> None:
     # Handle input BEFORE rendering the transcript to avoid one-message lag
     user_input = st.chat_input("Your message", disabled=st.session_state.ended)
     if user_input and not st.session_state.ended:
-        # User message logged to file only (not console for clean output)
         _append_message("user", user_input)
 
         state: Dict[str, Any] = {
@@ -272,27 +235,7 @@ def main() -> None:
                 _to_model_messages(st.session_state.messages), state
             )
         except Exception as e:
-            logger.error("agent_error | %s", str(e))
-            logger.debug(
-                "agent_error_details | %s",
-                json.dumps(
-                    {
-                        "error_type": type(e).__name__,
-                        "error_message": str(e),
-                        "session_id": st.session_state.session_id,
-                    },
-                    indent=2,
-                ),
-            )
             response = AIResponseWrapped(text="Agent error: using fallback reply.")
-
-        # Log assistant response to file only (not console for clean output)
-        logger.debug(
-            "assistant_message | text=%s | end=%s | metadata=%s",
-            response.text[:100] + "..." if len(response.text) > 100 else response.text,
-            response.end,
-            json.dumps(response.metadata or {}, default=str),
-        )
 
         _append_message("assistant", response.text, metadata=response.metadata)
 
@@ -315,7 +258,6 @@ def main() -> None:
                         details=None,
                     )
                 except Exception as e:
-                    logger.error("Failed to generate performance summary: %s", str(e))
                     st.session_state.performance_summary = (
                         "## Performance Evaluation Error\n\n"
                         "We encountered an error while generating the performance summary. "

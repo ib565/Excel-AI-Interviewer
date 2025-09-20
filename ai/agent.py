@@ -55,12 +55,8 @@ class GeminiAgent:
         Returns:
             A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
         """
-        # Log tool call for submission visibility
-        self.logger.warning(
-            "🔧 TOOL CALL: get_next_question | capabilities=%s | difficulty=%s",
-            capabilities,
-            difficulty,
-        )
+        # Log tool usage
+        self.logger.warning("TOOL: get_next_question")
 
         question = self._retrieve_question(
             capabilities=capabilities, difficulty=difficulty
@@ -84,13 +80,7 @@ class GeminiAgent:
             "capabilities": question.capabilities,
         }
 
-        # Log successful question retrieval
-        self.logger.warning(
-            "✅ QUESTION RETRIEVED | id=%s | difficulty=%s | capabilities=%s",
-            question.id,
-            question.difficulty,
-            question.capabilities,
-        )
+        self.logger.warning("QUESTION RETRIEVED")
 
         return result
 
@@ -112,14 +102,10 @@ class GeminiAgent:
         # Prepare the full prompt
         full_prompt = f"{system_prompt}\n\nConversation:\n" + "\n".join(gemini_messages)
 
-        # Log LLM request details to file only
-        self.logger.debug(
-            "LLM_REQUEST | message_count=%d | prompt_length=%d",
-            len(messages),
-            len(full_prompt),
-        )
-
         try:
+            # Log LLM call
+            self.logger.warning("LLM CALL")
+
             # Call Gemini API with function-calling tools (no structured outputs)
             response = self.client.models.generate_content(
                 model=self.model,
@@ -127,11 +113,6 @@ class GeminiAgent:
                 config=types.GenerateContentConfig(
                     tools=[self.get_next_question, self.generate_question]
                 ),
-            )
-
-            # Log basic API response info (detailed response goes to file only)
-            self.logger.debug(
-                "LLM_RAW_RESPONSE | text_length=%d", len(getattr(response, "text", ""))
             )
 
             # Extract response text
@@ -164,21 +145,9 @@ class GeminiAgent:
                 end=should_end,
             )
 
-            # Log essential response info
-            self.logger.info(
-                "LLM_RESPONSE | end=%s | tokens_used=%s | questions_used=%d",
-                should_end,
-                wrapped_response.metadata.get("tokens_used", 0),
-                wrapped_response.metadata.get("questions_used", 0),
-            )
-
             return wrapped_response
 
         except Exception as e:
-            # Log the error details
-            self.logger.error(
-                "LLM_ERROR | %s | message_count=%d", str(e), len(messages)
-            )
 
             # Fallback response if Gemini fails
             return AIResponseWrapped(
@@ -256,13 +225,8 @@ class GeminiAgent:
         Returns:
             A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
         """
-        # Log tool call for submission visibility
-        self.logger.warning(
-            "🔧 TOOL CALL: generate_question | capabilities=%s | difficulty=%s | notes=%s",
-            capabilities,
-            difficulty,
-            additional_notes,
-        )
+        # Log tool usage
+        self.logger.warning("TOOL: generate_question")
 
         try:
             # Compose generation prompt and call LLM separately
@@ -320,18 +284,9 @@ class GeminiAgent:
                 "capabilities": gen_caps,
             }
 
-            # Log successful question generation
-            self.logger.warning(
-                "✅ QUESTION GENERATED | id=%s | difficulty=%s | capabilities=%s",
-                new_id,
-                gen_diff,
-                gen_caps,
-            )
-
             return result
 
         except Exception as e:
-            self.logger.error("GENERATE_QUESTION_ERROR | %s", str(e))
             return {
                 "id": "",
                 "text": "Unable to generate a new question at this time.",
@@ -351,6 +306,9 @@ class GeminiAgent:
             difficulty=difficulty,
             additional_notes=additional_notes,
         )
+
+        # Log LLM call
+        self.logger.warning("LLM CALL")
 
         response = self.client.models.generate_content(
             model=self.model,
@@ -383,7 +341,6 @@ class GeminiAgent:
                 raise ValueError("Non-object JSON returned")
             return payload
         except Exception as parse_err:
-            self.logger.error("PARSE_GENERATE_QUESTION_JSON_ERROR | %s", str(parse_err))
             # Best-effort fallback: wrap as minimal payload
             return {
                 "text": cleaned if cleaned else "",
@@ -408,13 +365,12 @@ class GeminiAgent:
             # Build the evaluation prompt
             evaluation_prompt = render_performance_evaluation_prompt(transcript_content)
 
-            # Log the evaluation request for submission visibility
-            self.logger.warning(
-                "🔧 TOOL CALL: generate_performance_summary | message_count=%d",
-                len(messages),
-            )
+            # Log tool usage
+            self.logger.warning("TOOL: generate_performance_summary")
 
-            # Call Gemini API for evaluation
+            # Log LLM call and call Gemini API for evaluation
+            self.logger.warning("LLM CALL")
+
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=evaluation_prompt,
@@ -424,20 +380,9 @@ class GeminiAgent:
             # Extract the evaluation text
             evaluation_text = getattr(response, "text", "").strip()
 
-            # Log successful evaluation for submission visibility
-            self.logger.warning(
-                "✅ PERFORMANCE SUMMARY GENERATED | length=%d", len(evaluation_text)
-            )
-
             return evaluation_text
 
         except Exception as e:
-            # Log the error
-            self.logger.error(
-                "PERFORMANCE_EVALUATION_ERROR | %s | message_count=%d",
-                str(e),
-                len(messages),
-            )
 
             # Return a fallback summary
             return (

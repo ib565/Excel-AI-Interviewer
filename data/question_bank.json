@@ -322,5 +322,21 @@
       "Describes how to specify the custom error message 'Product Not Found'.",
       "Demonstrates understanding of using an exact match for lookups."
     ]
+  },
+  {
+    "id": "23",
+    "capabilities": [
+      "Data cleaning",
+      "Data modeling"
+    ],
+    "difficulty": "Hard",
+    "text": "Imagine you're given a massive, unstandardized Excel dataset comprising sales transactions. This data originates from disparate systems, leading to severe inconsistencies: `Product Name` and `Region` entries are highly variable (e.g., 'Product X', 'Px', 'X-Product', 'North', 'N. Region'). `Sales Amount` column contains text, special characters, and numeric values stored as text. `Transaction Date` appears in numerous date formats, and some cells are blank. Additionally, a `Notes` field often contains a critical, but variably formatted, `Customer ID` that needs to be extracted, validated, and linked. Your goal is to transform this raw, messy data into a clean, robust, and analyzable structure suitable for building a comprehensive dashboard in Excel. Detail your strategy, emphasizing advanced data cleaning, validation, and modeling techniques you would employ. How would you handle the different types of inconsistencies, validate the cleaned data, and structure it to facilitate future analysis and reporting, explaining why your chosen methods are superior for this complex scenario?",
+    "evaluation_criteria": [
+      "Demonstrates advanced cleaning techniques for text inconsistencies (e.g., Power Query's Fuzzy Matching, 'Column From Examples', advanced Excel text functions with helper columns for standardization).",
+      "Describes robust methods for normalizing data types and formats (e.g., Power Query's 'Change Type with Locale', `VALUE`/`DATEVALUE` with error handling, custom formatting).",
+      "Proposes a clear data structuring approach for analysis, including the conceptual creation of dimension and fact tables (or explicit Power Query merging/appending for a data model) and linking strategies (e.g., `XLOOKUP`/`INDEX-MATCH` or Power Query relationships).",
+      "Outlines effective data validation and quality assurance steps, including strategies for identifying and handling missing data, outliers, or erroneous entries post-cleaning.",
+      "Justifies the chosen techniques based on efficiency, scalability, and maintainability for recurring data updates or larger datasets."
+    ]
   }
 ]
