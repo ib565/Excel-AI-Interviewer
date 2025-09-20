@@ -6,7 +6,7 @@
 
 An AI-powered conversational interviewer that assesses Excel proficiency through structured technical interviews. Built as a proof-of-concept to demonstrate scalable, automated technical skill evaluation.
 
-## 🎯 Problem Statement
+## Problem Statement
 
 Traditional Excel technical interviews are:
 - **Time-intensive**: Senior analysts spend 2-3 hours per candidate
@@ -14,20 +14,31 @@ Traditional Excel technical interviews are:
 - **Scalable bottleneck**: Manual process limits hiring velocity
 - **Quality vs. speed trade-off**: Pressure compromises thorough assessment
 
-## 🚀 Solution Overview
+## Solution Overview
 
 This AI-driven system conducts structured Excel interviews through natural conversation, evaluates responses in real-time using LLM-powered assessment, and generates comprehensive performance reports.
 
+## Core Interview Loop
+
+The interview process follows a structured, adaptive flow:
+
+1. **Self-Assessment**: Interviewee provides initial self-assessment of their Excel proficiency level
+2. **Question Selection**: Agent fetches appropriate questions from the question bank based on target difficulty and capability to test
+3. **Adaptive Response Handling**:
+   - Based on interviewee response quality, agent either asks follow-up questions or selects new questions with adjusted difficulty/capability levels
+4. **Dynamic Question Generation**: When no suitable questions exist in the bank, agent generates new questions matching the intended difficulty and style
+5. **Comprehensive Evaluation**: Agent analyzes all responses to create a detailed performance report with strengths, areas for improvement, and proficiency assessment
+
 ### Key Features
 
-- **🤖 Conversational AI Interviewer**: Natural dialogue that adapts to candidate responses
-- **📊 Intelligent Evaluation**: Structured rubric-based assessment with confidence scoring
-- **🔄 Adaptive Difficulty**: Questions scale based on demonstrated proficiency
-- **📈 Performance Analytics**: Detailed feedback reports with specific improvement recommendations
-- **🔧 Modular Architecture**: Pluggable AI agents supporting multiple LLM providers
-- **💾 Local Persistence**: Complete transcript storage with metadata preservation
+- **Conversational AI Interviewer**: Natural dialogue that adapts to candidate responses
+- **Intelligent Evaluation**: Conversational assessment with adaptive questioning
+- **Adaptive Difficulty**: Questions scale based on demonstrated proficiency
+- **Performance Analytics**: Detailed feedback reports with specific improvement recommendations
+- **Modular Architecture**: Pluggable AI agents supporting multiple LLM providers
+- **Local Persistence**: Complete transcript storage with metadata preservation
 
-## 🏗️ Architecture
+## Architecture
 
 ### System Components
 
@@ -40,7 +51,7 @@ This AI-driven system conducts structured Excel interviews through natural conve
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │  Session State  │    │   Data Models   │    │   Prompts       │
-│  Management     │    │   (Pydantic)    │    │   & Evaluation  │
+│  Management     │    │   (Pydantic)    │    │   & Assessment  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
@@ -52,31 +63,31 @@ This AI-driven system conducts structured Excel interviews through natural conve
 
 ### Core Components
 
-#### 🎨 User Interface (Streamlit)
+#### User Interface (Streamlit)
 - Clean, professional chat interface
 - Real-time conversation display
 - Session controls and transcript download
 - Performance summary visualization
 
-#### 🔌 AI Agent System
+#### AI Agent System
 - **Protocol-based design** for easy provider switching
 - **Function calling** for structured question retrieval
-- **Structured outputs** for consistent evaluation
+- **Conversational responses** with natural dialogue flow
 - **Fallback mechanisms** for error handling
 
-#### 📚 Question Bank Management
+#### Question Bank Management
 - **Curated questions** covering core Excel competencies
 - **Dynamic generation** using LLM when bank is exhausted
 - **Duplicate prevention** within interview sessions
 - **Metadata tagging** by capability and difficulty
 
-#### 💽 Storage Layer
+#### Storage Layer
 - **JSONL transcripts** for efficient streaming writes
 - **Session-based organization** with full metadata
 - **Event logging** for analytics and debugging
 - **Local persistence** for offline operation
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
@@ -94,13 +105,13 @@ This AI-driven system conducts structured Excel interviews through natural conve
 - **Local-First Storage**: Simplifies deployment and enables offline operation
 - **Streaming Transcripts**: JSONL format for efficient append operations
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.8 or higher
 - Google Gemini API key
 - Virtual environment (recommended)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone and Setup
 
@@ -129,45 +140,34 @@ streamlit run main.py
 
 The application will be available at `http://localhost:8501`
 
-## 🎯 Usage
-
-### Interview Flow
-
-1. **Self-Assessment**: Candidates start by describing their Excel experience
-2. **Question Selection**: AI chooses appropriate questions from the bank or generates new ones
-3. **Conversational Assessment**: Natural dialogue with follow-up questions based on responses
-4. **Real-time Evaluation**: LLM evaluates answers using structured rubrics
-5. **Performance Summary**: Comprehensive feedback report at interview conclusion
+## Usage
 
 ### Question Categories
 
 The system covers core Excel competencies:
 
-- **📊 Formulas & Functions**: Cell references, array formulas, advanced functions
-- **📈 Data Analysis**: Pivot tables, data cleaning, analysis tools
-- **📉 Visualization**: Charts, conditional formatting, dashboards
-- **⚡ Automation**: Macros, Power Query, data connections
-- **🔧 Advanced Features**: Power Pivot, VBA concepts, external integrations
+- **Formulas & Functions**: Cell references, array formulas, advanced functions
+- **Data Analysis**: Pivot tables, data cleaning, analysis tools
+- **Visualization**: Charts, conditional formatting, dashboards
+- **Automation**: Macros, Power Query, data connections
+- **Advanced Features**: Power Pivot, VBA concepts, external integrations
 
-## 📊 Evaluation Framework
+## Evaluation Framework
 
-### Scoring Methodology
+### Evaluation Approach
 
-- **Defined Criteria**: Fixed criteria for each question
-- **Confidence Assessment**: AI self-evaluation of assessment certainty
-- **Follow-up Logic**: Clarifying questions when confidence is low
-- **Bias Mitigation**: Standardized criteria reduce subjective variance
+The AI agent evaluates responses conversationally throughout the interview, adapting questions based on demonstrated proficiency. The final performance summary provides comprehensive feedback on technical accuracy, problem-solving approach, and Excel competency level.
 
 ### Performance Report
 
 Generated reports include:
-- **Overall Proficiency Level**: Beginner → Expert classification based on the fixed criteria
+- **Overall Proficiency Level**: Beginner → Expert classification based on demonstrated skills
 - **Strength Analysis**: Areas of demonstrated competence
 - **Improvement Areas**: Specific skills needing development
 - **Technical Accuracy**: Detailed evaluation of responses
 - **Communication Assessment**: Clarity and problem-solving approach
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -184,7 +184,7 @@ Located at `data/question_bank.json`, contains:
 - Capability and difficulty metadata
 - Expansion through LLM generation
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ExcelInterviewerAI/
@@ -208,7 +208,7 @@ ExcelInterviewerAI/
 └── README.md             # This file
 ```
 
-## 🔍 Key Design Patterns
+## Key Design Patterns
 
 ### Agent Protocol
 ```python
@@ -219,12 +219,5 @@ class AIAgent(Protocol):
     def generate_performance_summary(self, messages: List[Message]) -> str: ...
 ```
 
-### Structured Evaluation
-```python
-class Evaluation(BaseModel):
-    question_id: str
-    criteria_scores: Dict[str, int]  # 0-5 scale per criterion
-    total_score: float
-    confidence: float  # 0-1 scale
-    feedback: str
-```
+### Performance Summary Generation
+The agent generates a comprehensive performance summary at the end of the interview, analyzing all responses to provide detailed feedback on the candidate's Excel proficiency.
