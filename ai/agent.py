@@ -55,6 +55,13 @@ class GeminiAgent:
         Returns:
             A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
         """
+        # Log tool call for submission visibility
+        self.logger.warning(
+            "🔧 TOOL CALL: get_next_question | capabilities=%s | difficulty=%s",
+            capabilities,
+            difficulty,
+        )
+
         question = self._retrieve_question(
             capabilities=capabilities, difficulty=difficulty
         )
@@ -70,12 +77,22 @@ class GeminiAgent:
         if question.id:
             self._used_question_ids.add(question.id)
 
-        return {
+        result = {
             "id": question.id,
             "text": question.text,
             "difficulty": question.difficulty,
             "capabilities": question.capabilities,
         }
+
+        # Log successful question retrieval
+        self.logger.warning(
+            "✅ QUESTION RETRIEVED | id=%s | difficulty=%s | capabilities=%s",
+            question.id,
+            question.difficulty,
+            question.capabilities,
+        )
+
+        return result
 
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
@@ -239,6 +256,14 @@ class GeminiAgent:
         Returns:
             A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
         """
+        # Log tool call for submission visibility
+        self.logger.warning(
+            "🔧 TOOL CALL: generate_question | capabilities=%s | difficulty=%s | notes=%s",
+            capabilities,
+            difficulty,
+            additional_notes,
+        )
+
         try:
             # Compose generation prompt and call LLM separately
             gen_payload = self._generate_question_via_llm(
@@ -288,12 +313,22 @@ class GeminiAgent:
             if new_id:
                 self._used_question_ids.add(new_id)
 
-            return {
+            result = {
                 "id": new_id,
                 "text": text_raw,
                 "difficulty": gen_diff,
                 "capabilities": gen_caps,
             }
+
+            # Log successful question generation
+            self.logger.warning(
+                "✅ QUESTION GENERATED | id=%s | difficulty=%s | capabilities=%s",
+                new_id,
+                gen_diff,
+                gen_caps,
+            )
+
+            return result
 
         except Exception as e:
             self.logger.error("GENERATE_QUESTION_ERROR | %s", str(e))
@@ -373,9 +408,10 @@ class GeminiAgent:
             # Build the evaluation prompt
             evaluation_prompt = render_performance_evaluation_prompt(transcript_content)
 
-            # Log the evaluation request
-            self.logger.info(
-                "GENERATING_PERFORMANCE_SUMMARY | message_count=%d", len(messages)
+            # Log the evaluation request for submission visibility
+            self.logger.warning(
+                "🔧 TOOL CALL: generate_performance_summary | message_count=%d",
+                len(messages),
             )
 
             # Call Gemini API for evaluation
@@ -388,9 +424,9 @@ class GeminiAgent:
             # Extract the evaluation text
             evaluation_text = getattr(response, "text", "").strip()
 
-            # Log the evaluation response
-            self.logger.info(
-                "PERFORMANCE_SUMMARY_GENERATED | length=%d", len(evaluation_text)
+            # Log successful evaluation for submission visibility
+            self.logger.warning(
+                "✅ PERFORMANCE SUMMARY GENERATED | length=%d", len(evaluation_text)
             )
 
             return evaluation_text

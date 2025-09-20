@@ -200,13 +200,23 @@ def _maybe_bootstrap_first_message() -> None:
 def main() -> None:
     ensure_app_dirs()
     _init_session_state()
-    logger = _get_logger()
-    agent = load_ai_agent()
-    agent_name = agent.name
 
-    # Log startup info for submission visibility
-    print(f"🚀 Excel Interviewer AI started successfully with agent: {agent_name}")
-    logger.info("Application started with agent: %s", agent_name)
+    # Only show startup message once per session
+    if "startup_logged" not in st.session_state:
+        logger = _get_logger()
+        agent = load_ai_agent()
+        agent_name = agent.name
+
+        # Log startup info for submission visibility
+        print(f"🚀 Excel Interviewer AI started successfully with agent: {agent_name}")
+        logger.info("Application started with agent: %s", agent_name)
+        st.session_state.startup_logged = True
+        st.session_state.agent = agent
+        st.session_state.agent_name = agent_name
+    else:
+        logger = _get_logger()
+        agent = st.session_state.agent
+        agent_name = st.session_state.agent_name
 
     _render_header()
     _render_sidebar(agent_name)
