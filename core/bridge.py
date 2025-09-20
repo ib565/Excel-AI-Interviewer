@@ -3,7 +3,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Protocol
 
-from core.models import AIResponse, Message
+from core.models import AIResponseWrapped, Message
 
 
 class AIAdapter(Protocol):
@@ -19,7 +19,7 @@ class AIAdapter(Protocol):
 
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
-    ) -> AIResponse: ...
+    ) -> AIResponseWrapped: ...
 
 
 def load_ai_adapter() -> AIAdapter:
@@ -32,11 +32,14 @@ def load_ai_adapter() -> AIAdapter:
     try:
         module = import_module("ai.adapter")
         get_adapter = getattr(module, "get_adapter", None)
+        print("get_adapter")
+        print(get_adapter)
         if callable(get_adapter):
             return get_adapter()
-    except Exception:
+    except Exception as e:
+        print("load_ai_adapter: Exception", e)
         # Fall back to local stub below
-        pass
+        print("load_ai_adapter: Fall back to local stub")
 
     return _LocalEchoAdapter()
 
@@ -51,13 +54,13 @@ class _LocalEchoAdapter:
 
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
-    ) -> AIResponse:
+    ) -> AIResponseWrapped:
         print("generate_reply")
         print(messages)
         print(state)
         last_user = next((m for m in reversed(messages) if m.role == "user"), None)
         if last_user is None:
-            return AIResponse(
+            return AIResponseWrapped(
                 text="Hello! I'm a stubbed assistant. Tell me about your Excel skills.",
                 metadata={"adapter": "local_echo_stub"},
                 end=False,
@@ -70,7 +73,7 @@ class _LocalEchoAdapter:
         if name:
             prefix = f"{prefix}, {name}"
 
-        return AIResponse(
+        return AIResponseWrapped(
             text=f"{prefix}: I received your message — '{last_user.content}'.",
             metadata={"adapter": "local_echo_stub"},
             end=False,

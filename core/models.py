@@ -16,12 +16,19 @@ class Message(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
-class AIResponse(BaseModel):
+class AIResponseWrapped(BaseModel):
     """Response returned by the AI adapter."""
 
     text: str
     metadata: Optional[Dict[str, Any]] = None
     end: bool = False
+
+
+class AIResponse(BaseModel):
+    """Response returned by the AI adapter."""
+
+    text: str
+    end: bool
 
 
 class Question(BaseModel):

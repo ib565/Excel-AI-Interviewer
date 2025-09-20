@@ -17,7 +17,7 @@ from config import (
     get_session_transcript_path,
 )
 from core.bridge import load_ai_adapter
-from core.models import AIResponse, Message
+from core.models import AIResponseWrapped, Message
 from storage.transcripts import save_event_line, save_message_line
 from storage.question_bank import get_question_bank
 
@@ -37,6 +37,7 @@ def _init_session_state() -> None:
 
 
 def _get_logger() -> logging.Logger:
+    # Get the main session logger
     logger = logging.getLogger(f"session.{st.session_state.session_id}")
     if not logger.handlers:
         logger.setLevel(logging.INFO)
@@ -46,7 +47,9 @@ def _get_logger() -> logging.Logger:
             get_session_log_path(st.session_state.session_id, timestamp),
             encoding="utf-8",
         )
-        formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        )
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
@@ -54,6 +57,15 @@ def _get_logger() -> logging.Logger:
         ch = logging.StreamHandler()
         ch.setFormatter(formatter)
         logger.addHandler(ch)
+
+    # Set up the AI adapter logger
+    ai_logger = logging.getLogger("ai.adapter.gemini")
+    if not ai_logger.handlers:
+        ai_logger.setLevel(logging.DEBUG)  # More detailed logging for AI adapter
+        ai_logger.addHandler(fh)  # Use the same file handler
+        ai_logger.addHandler(ch)  # Use the same console handler
+        ai_logger.propagate = False  # Prevent duplicate logs
+
     return logger
 
 
@@ -179,14 +191,36 @@ def main() -> None:
             "session_id": st.session_state.session_id,
         }
         try:
-            response: AIResponse = adapter.generate_reply(
+            response: AIResponseWrapped = adapter.generate_reply(
                 _to_model_messages(st.session_state.messages), state
             )
         except Exception as e:
-            logger.exception("adapter_error: %s", e)
-            response = AIResponse(text="Adapter error: using fallback reply.")
+            logger.error("adapter_error | %s", str(e))
+            logger.debug(
+                "adapter_error_details | %s",
+                json.dumps(
+                    {
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                        "session_id": st.session_state.session_id,
+                    },
+                    indent=2,
+                ),
+            )
+            response = AIResponseWrapped(text="Adapter error: using fallback reply.")
 
-        logger.info("assistant_message | %s", response.text)
+        # Log the full assistant response details
+        logger.info(
+            "assistant_message | text=%s | end=%s | metadata=%s",
+            response.text,
+            response.end,
+            json.dumps(response.metadata or {}, default=str),
+        )
+        logger.debug(
+            "assistant_full_response | %s",
+            json.dumps(response.model_dump(), indent=2, default=str),
+        )
+
         _append_message("assistant", response.text, metadata=response.metadata)
 
         if response.end:
