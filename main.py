@@ -113,8 +113,9 @@ def _append_message(
 def _render_header() -> None:
     st.title(APP_NAME)
     st.caption(
-        "Conversational Excel interviewer. Retrieves questions from a dynamic question bank, and evaluates the candidate's responses. Generates a performance summary at the end."
+        "Conversational Excel interviewer. Retrieves questions from a dynamic question bank, and evaluates the candidate's responses. Generates a performance summary at the end.\n"
     )
+    st.caption("The user can ask to end the interview at any time.")
 
 
 def _render_sidebar(agent_name: str) -> None:
