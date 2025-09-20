@@ -257,11 +257,6 @@ class QuestionBank:
             print("Error: Difficulty cannot be empty")
             return False
 
-        # Validate that capabilities is a list of non-empty strings
-        if not isinstance(capabilities, list):
-            print("Error: Capabilities must be a list of strings")
-            return False
-
         for cap in capabilities:
             if not isinstance(cap, str) or not cap.strip():
                 print("Error: All capabilities must be non-empty strings")

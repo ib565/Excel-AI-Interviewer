@@ -191,7 +191,6 @@ def main() -> None:
             response: AIResponseWrapped = adapter.generate_reply(
                 _to_model_messages(st.session_state.messages), state
             )
-            logger.info("assistant_message | %s", response.text)
         except Exception as e:
             logger.error("adapter_error | %s", str(e))
             logger.debug(
