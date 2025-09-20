@@ -115,7 +115,9 @@ def _render_header() -> None:
     st.caption(
         "Conversational Excel interviewer. Retrieves questions from a dynamic question bank, and evaluates the candidate's responses. Generates a performance summary at the end.\n"
     )
-    st.caption("The user can ask to end the interview at any time.")
+    st.caption(
+        "The user can ask to end the interview at any time. The Agent has been instructed to keep the interview short for demo purposes."
+    )
 
 
 def _render_sidebar(agent_name: str) -> None:
