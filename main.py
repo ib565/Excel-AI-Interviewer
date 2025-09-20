@@ -149,7 +149,7 @@ def main() -> None:
     _init_session_state()
     logger = _get_logger()
     adapter = load_ai_adapter()
-    adapter_name = getattr(adapter, "__class__", type("", (), {})).__name__
+    adapter_name = adapter.name
 
     _render_header()
     _render_sidebar(adapter_name)

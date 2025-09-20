@@ -12,6 +12,11 @@ class AIAdapter(Protocol):
     The UI will pass prior messages and an optional state dict and expect an AIResponse.
     """
 
+    @property
+    def name(self) -> str:
+        """Return a user-friendly name for this adapter."""
+        ...
+
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
     ) -> AIResponse: ...
@@ -39,13 +44,23 @@ def load_ai_adapter() -> AIAdapter:
 class _LocalEchoAdapter:
     """Simple built-in stub so the UI is testable without an AI backend."""
 
+    @property
+    def name(self) -> str:
+        """Return user-friendly name for this adapter."""
+        return "Local Echo"
+
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
-    ) -> AIResponse:  # noqa: D401
+    ) -> AIResponse:
+        print("generate_reply")
+        print(messages)
+        print(state)
         last_user = next((m for m in reversed(messages) if m.role == "user"), None)
         if last_user is None:
             return AIResponse(
-                text="Hello! I'm a stubbed assistant. Tell me about your Excel skills."
+                text="Hello! I'm a stubbed assistant. Tell me about your Excel skills.",
+                metadata={"adapter": "local_echo_stub"},
+                end=False,
             )
 
         prefix = "Stub reply"

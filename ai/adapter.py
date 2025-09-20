@@ -16,6 +16,11 @@ class GeminiAdapter:
     between the interface contract and the implementation.
     """
 
+    @property
+    def name(self) -> str:
+        """Return user-friendly name for this adapter."""
+        return "Gemini AI"
+
     def __init__(self):
         # Initialize Gemini client (you'd set GEMINI_API_KEY in environment)
         self.client = genai.Client()
