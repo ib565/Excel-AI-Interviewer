@@ -7,6 +7,7 @@ from google import genai
 from google.genai import types
 from core.models import AIResponseWrapped, Message, Question
 from core.bridge import AIAdapter
+from core.utils import parse_response_flags_and_clean_text
 from storage.question_bank import get_question_bank
 from ai.prompts import render_system_prompt, render_generate_question_prompt
 from dotenv import load_dotenv
@@ -119,7 +120,7 @@ class GeminiAdapter:
 
             # Parse flags from the response tail and clean them from user-visible text
             cleaned_text, end_flag, question_id_from_flags = (
-                self._parse_flags_and_clean_text(reply_text_raw)
+                parse_response_flags_and_clean_text(reply_text_raw)
             )
 
             # If model explicitly referenced a question id, track it
@@ -287,27 +288,16 @@ class GeminiAdapter:
             eval_criteria = [str(e).strip() for e in eval_criteria if str(e).strip()]
 
             # Persist to the question bank and get the new id
-            if hasattr(self.question_bank, "add_question_and_get_id"):
-                new_id = (
-                    self.question_bank.add_question_and_get_id(
-                        text=text_raw,
-                        capabilities=gen_caps,
-                        difficulty=gen_diff,
-                        question_id=None,
-                        evaluation_criteria=eval_criteria,
-                    )
-                    or ""
-                )
-            else:
-                # Backward compatibility
-                saved = self.question_bank.add_question(
+            new_id = (
+                self.question_bank.add_question_and_get_id(
                     text=text_raw,
                     capabilities=gen_caps,
                     difficulty=gen_diff,
                     question_id=None,
                     evaluation_criteria=eval_criteria,
                 )
-                new_id = ""
+                or ""
+            )
 
             if new_id:
                 self._used_question_ids.add(new_id)
@@ -382,33 +372,6 @@ class GeminiAdapter:
                 "difficulty": difficulty or "Medium",
                 "evaluation_criteria": [],
             }
-
-    def _parse_flags_and_clean_text(self, text: str) -> Tuple[str, bool, Optional[str]]:
-        """Extract end/QID flags from the response tail and return cleaned text.
-
-        The protocol expects a trailing token like: [[END=true QID=123]]
-        Returns (cleaned_text, end_flag, question_id)
-        """
-        if not text:
-            return "", False, None
-
-        # Regex to capture flags block at the end
-        flags_pattern = re.compile(
-            r"\s*\[\[\s*END\s*=\s*(true|false)\s+QID\s*=\s*([^\]]+)\s*\]\]\s*$",
-            re.IGNORECASE,
-        )
-        match = flags_pattern.search(text)
-        if not match:
-            return text, False, None
-
-        end_str = match.group(1).lower()
-        qid_raw = match.group(2).strip()
-        end_flag = end_str == "true"
-        question_id = None if qid_raw in {"none", "", "null"} else qid_raw
-
-        # Remove the flags block from the text
-        cleaned = text[: match.start()].rstrip()
-        return cleaned, end_flag, question_id
 
 
 def get_adapter() -> AIAdapter:
