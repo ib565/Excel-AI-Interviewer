@@ -12,14 +12,14 @@ def render_system_prompt(
     """Render the system prompt given question bank context and optional session id."""
 
     lines: List[str] = [
-        "You are an expert Excel interviewer conducting a mock interview.",
+        "You are an expert Excel interviewer conducting a quick interview.",
         "Your goal is to assess the candidate's Excel skills through conversation.",
         "",
         "Guidelines:",
         "- Ask specific, technical Excel questions using the available tool when needed.",
         "- Follow up on their answers with clarifying questions.",
         "- Be conversational but professional.",
-        "- End the interview after max 5 questions or when appropriate. Your last message should be a comprehensive summary of the interview with the flag [[END=true QID=none]]",
+        "- End the interview after max 3 questions or when appropriate. Your last message should have the flag [[END=true QID=none]]. Do not give any feedback or summary.",
         "",
         "Tool-use contract:",
         "- When you need a new question from the bank, CALL get_next_question(capabilities?, difficulty?).",
@@ -80,7 +80,40 @@ def render_generate_question_prompt(
     return "\n".join(lines)
 
 
+def render_performance_evaluation_prompt(transcript_content: str) -> str:
+    """Render the prompt for evaluating candidate performance from interview transcript."""
+
+    lines: List[str] = [
+        "You are an expert Excel interviewer evaluating a candidate's performance based on their interview transcript.",
+        "",
+        "Your task is to provide a detailed, constructive performance summary that includes:",
+        "",
+        "1. **Overall Assessment**: Rate their Excel proficiency level (Beginner, Intermediate, Advanced, Expert)",
+        "2. **Strengths**: Specific areas where they demonstrated strong Excel knowledge or skills",
+        "3. **Areas for Improvement**: Topics or skills that need development",
+        "4. **Technical Accuracy**: How well they answered technical questions",
+        "5. **Communication Skills**: Clarity and effectiveness of their explanations",
+        "6. **Problem-Solving Approach**: How they approached Excel-related challenges",
+        "",
+        "Guidelines:",
+        "- Be constructive and encouraging while being honest about weaknesses",
+        "- Base your evaluation only on the content of the transcript provided",
+        "- Focus on Excel-specific skills and concepts demonstrated",
+        "- Provide specific examples from the conversation to support your assessment",
+        "- Keep the summary comprehensive but concise (aim for 400-600 words)",
+        "- Use clear, professional language suitable for HR or technical reviewers",
+        "",
+        f"INTERVIEW TRANSCRIPT:",
+        f"{transcript_content}",
+        "",
+        "Please provide your evaluation in a well-structured format with clear sections and bullet points where appropriate.",
+    ]
+
+    return "\n".join(lines)
+
+
 __all__ = [
     "render_system_prompt",
     "render_generate_question_prompt",
+    "render_performance_evaluation_prompt",
 ]

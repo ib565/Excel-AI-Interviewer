@@ -34,6 +34,10 @@ def _init_session_state() -> None:
         st.session_state.ended = False
     if "turn_index" not in st.session_state:
         st.session_state.turn_index = 0
+    if "evaluation_generated" not in st.session_state:
+        st.session_state.evaluation_generated = False
+    if "performance_summary" not in st.session_state:
+        st.session_state.performance_summary = None
 
 
 def _get_logger() -> logging.Logger:
@@ -135,6 +139,8 @@ def _restart_session() -> None:
     st.session_state.messages = []
     st.session_state.ended = False
     st.session_state.turn_index = 0
+    st.session_state.evaluation_generated = False
+    st.session_state.performance_summary = None
 
 
 def _transcript_download() -> None:
@@ -223,6 +229,30 @@ def main() -> None:
         if response.end:
             st.session_state.ended = True
             save_event_line(st.session_state.session_id, "end", details=None)
+
+            # Generate performance summary if not already generated
+            if not st.session_state.evaluation_generated:
+                try:
+                    st.session_state.performance_summary = (
+                        adapter.generate_performance_summary(
+                            _to_model_messages(st.session_state.messages)
+                        )
+                    )
+                    st.session_state.evaluation_generated = True
+                    save_event_line(
+                        st.session_state.session_id,
+                        "evaluation_generated",
+                        details=None,
+                    )
+                except Exception as e:
+                    logger.error("Failed to generate performance summary: %s", str(e))
+                    st.session_state.performance_summary = (
+                        "## Performance Evaluation Error\n\n"
+                        "We encountered an error while generating the performance summary. "
+                        "Please review the transcript manually for assessment."
+                    )
+                    st.session_state.evaluation_generated = True
+
             # Force immediate rerun to apply disabled state to input
             st.rerun()
 
@@ -233,11 +263,17 @@ def main() -> None:
             with st.chat_message(m["role"]):
                 st.markdown(m["content"])
 
-    # Show success popup AFTER transcript rendering to ensure it's visible
+    # Show success popup and performance summary AFTER transcript rendering to ensure it's visible
     if st.session_state.ended:
         st.success(
             "This interview session has ended. You can download the transcript or restart."
         )
+
+        # Display performance summary if available
+        if st.session_state.performance_summary:
+            st.markdown("---")
+            st.subheader("📊 Performance Summary")
+            st.markdown(st.session_state.performance_summary)
 
 
 if __name__ == "__main__":

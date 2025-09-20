@@ -9,7 +9,11 @@ from core.models import AIResponseWrapped, Message, Question
 from core.bridge import AIAdapter
 from core.utils import parse_response_flags_and_clean_text
 from storage.question_bank import get_question_bank
-from ai.prompts import render_system_prompt, render_generate_question_prompt
+from ai.prompts import (
+    render_system_prompt,
+    render_generate_question_prompt,
+    render_performance_evaluation_prompt,
+)
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -372,6 +376,84 @@ class GeminiAdapter:
                 "difficulty": difficulty or "Medium",
                 "evaluation_criteria": [],
             }
+
+    def generate_performance_summary(self, messages: List[Message]) -> str:
+        """Generate a detailed performance summary based on the interview transcript.
+
+        Args:
+            messages: List of Message objects from the interview transcript
+
+        Returns:
+            A detailed performance evaluation summary as a string
+        """
+        try:
+            # Extract only the relevant conversation content (no metadata)
+            transcript_content = self._extract_transcript_content(messages)
+
+            # Build the evaluation prompt
+            evaluation_prompt = render_performance_evaluation_prompt(transcript_content)
+
+            # Log the evaluation request
+            self.logger.info(
+                "GENERATING_PERFORMANCE_SUMMARY | message_count=%d", len(messages)
+            )
+            self.logger.debug("EVALUATION_PROMPT | %s", evaluation_prompt)
+
+            # Call Gemini API for evaluation
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=evaluation_prompt,
+                config=types.GenerateContentConfig(),
+            )
+
+            # Extract the evaluation text
+            evaluation_text = getattr(response, "text", "").strip()
+
+            # Log the evaluation response
+            self.logger.info(
+                "PERFORMANCE_SUMMARY_GENERATED | length=%d", len(evaluation_text)
+            )
+            self.logger.debug("EVALUATION_RESPONSE | %s", evaluation_text)
+
+            return evaluation_text
+
+        except Exception as e:
+            # Log the error
+            self.logger.error("PERFORMANCE_EVALUATION_ERROR | %s", str(e))
+            self.logger.debug(
+                "PERFORMANCE_EVALUATION_ERROR_DETAILS | %s",
+                json.dumps(
+                    {
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                        "message_count": len(messages),
+                    },
+                    indent=2,
+                ),
+            )
+
+            # Return a fallback summary
+            return (
+                "## Performance Evaluation\n\n"
+                "We apologize, but we were unable to generate a detailed performance summary at this time due to a technical issue. "
+                "Please review the interview transcript manually for assessment.\n\n"
+                f"Error: {str(e)}"
+            )
+
+    def _extract_transcript_content(self, messages: List[Message]) -> str:
+        """Extract only the relevant conversation content from messages, excluding metadata."""
+        conversation_lines = []
+
+        for msg in messages:
+            # Skip system messages
+            if msg.role == "system":
+                continue
+
+            # Format as simple conversation
+            role_display = "Interviewer" if msg.role == "assistant" else "Candidate"
+            conversation_lines.append(f"{role_display}: {msg.content}")
+
+        return "\n\n".join(conversation_lines)
 
 
 def get_adapter() -> AIAdapter:
