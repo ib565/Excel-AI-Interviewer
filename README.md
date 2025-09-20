@@ -140,6 +140,12 @@ These transcripts demonstrate the full interview flow from self-assessment throu
 - **Local-First Storage**: Simplifies deployment and enables offline operation
 - **Streaming Transcripts**: JSONL format for efficient append operations
 
+### Tech Stack Justification
+
+- **Gemini SDK**: Chosen for large free usage limits, variety of models, and robust function calling capabilities
+- **Direct API Integration**: Opted against full-fledged frameworks (CrewAI, LangChain, etc.) to maintain control and deep understanding of the underlying AI interactions
+- **Streamlit**: Selected for rapid prototyping and easy deployment; alternative could have been a Python + React stack hosted on Render + Vercel
+
 ## Prerequisites
 
 - Python 3.8 or higher
@@ -254,5 +260,3 @@ class AIAgent(Protocol):
     def generate_performance_summary(self, messages: List[Message]) -> str: ...
 ```
 
-### Performance Summary Generation
-The agent generates a comprehensive performance summary at the end of the interview, analyzing all responses to provide detailed feedback on the candidate's Excel proficiency.
