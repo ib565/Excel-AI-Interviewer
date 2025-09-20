@@ -19,19 +19,10 @@ from config import (
 from core.bridge import load_ai_adapter
 from core.models import AIResponse, Message
 from storage.transcripts import save_event_line, save_message_line
+from storage.question_bank import get_question_bank
 
 
 st.set_page_config(page_title=APP_NAME, layout="wide")
-
-
-def _load_question_bank() -> List[Dict[str, Any]]:
-    path = Path(QUESTION_BANK_PATH)
-    if not path.exists():
-        return []
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return []
 
 
 def _init_session_state() -> None:
@@ -41,8 +32,6 @@ def _init_session_state() -> None:
         st.session_state.messages = []
     if "ended" not in st.session_state:
         st.session_state.ended = False
-    if "question_bank" not in st.session_state:
-        st.session_state.question_bank = _load_question_bank()
 
 
 def _get_logger() -> logging.Logger:
@@ -92,9 +81,19 @@ def _render_sidebar(adapter_name: str) -> None:
             _restart_session()
             st.experimental_rerun()
 
+        # Display question bank info
+        question_bank = get_question_bank()
         with st.expander("Question bank (sample)", expanded=False):
-            if st.session_state.question_bank:
-                st.dataframe(st.session_state.question_bank, width="stretch")
+            question_count = question_bank.get_question_count()
+            if question_count > 0:
+                st.info(f"Total questions: {question_count}")
+
+                # Show sample questions
+                sample_questions = question_bank.select_questions(
+                    min(3, question_count)
+                )
+                for q in sample_questions:
+                    st.write(f"**{q.capability}** ({q.difficulty}): {q.text[:100]}...")
             else:
                 st.info("No question bank found.")
 
@@ -163,7 +162,6 @@ def main() -> None:
         _append_message("user", user_input)
 
         state: Dict[str, Any] = {
-            "question_bank": st.session_state.question_bank,
             "session_id": st.session_state.session_id,
         }
         try:
