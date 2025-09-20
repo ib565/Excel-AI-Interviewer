@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import logging
 import os
@@ -31,50 +29,50 @@ class GeminiAdapter:
         # Track used questions in this session
         self._used_question_ids: Set[str] = set()
         # Set up logger
-        self.logger = logging.getLogger("ai.adapter.gemini")
+        self.logger = logging.getLogger(
+            "ai.adapter.gemini"
+        )  # Register available tools for function calling
 
-        def get_next_question(
-            capabilities: List[str] = None,
-            difficulty: str = None,
-        ) -> Dict[str, Any]:
-            """Retrieve the next question from the local bank.
+    def get_next_question(
+        self,
+        capabilities: Optional[List[str]] = None,
+        difficulty: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Retrieve the next question from the local bank.
 
-            This function automatically avoids repeating questions within the current session.
+        This function automatically avoids repeating questions within the current session.
 
-            Args:
-                capabilities: Optional list of capabilities to target (e.g., ["Formulas", "Pivot Tables"]).
-                difficulty: Optional difficulty filter (e.g., "Easy", "Medium", "Hard", "Advanced").
+        Args:
+            capabilities: Optional list of capabilities to target (e.g., ["Formulas", "Pivot Tables"]).
+            difficulty: Optional difficulty filter (e.g., "Easy", "Medium", "Hard", "Advanced").
 
-            Returns:
-                A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
-            """
-            print("in get_next_question")
-            print(capabilities)
-            print(difficulty)
-            question = self._retrieve_question(
-                capabilities=capabilities, difficulty=difficulty
-            )
-            if question is None:
-                return {
-                    "id": "",
-                    "text": "No more suitable questions are available.",
-                    "difficulty": difficulty or "",
-                    "capabilities": capabilities or [],
-                }
-
-            # Mark question as used immediately to avoid repeats
-            if question.id:
-                self._used_question_ids.add(question.id)
-
+        Returns:
+            A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
+        """
+        print("in get_next_question")
+        print(capabilities)
+        print(difficulty)
+        question = self._retrieve_question(
+            capabilities=capabilities, difficulty=difficulty
+        )
+        if question is None:
             return {
-                "id": question.id,
-                "text": question.text,
-                "difficulty": question.difficulty,
-                "capabilities": question.capabilities,
+                "id": "",
+                "text": "No more suitable questions are available.",
+                "difficulty": difficulty or "",
+                "capabilities": capabilities or [],
             }
 
-        # Register available tools for function calling
-        self._tools = [get_next_question]
+        # Mark question as used immediately to avoid repeats
+        if question.id:
+            self._used_question_ids.add(question.id)
+
+        return {
+            "id": question.id,
+            "text": question.text,
+            "difficulty": question.difficulty,
+            "capabilities": question.capabilities,
+        }
 
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
@@ -107,7 +105,7 @@ class GeminiAdapter:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=full_prompt,
-                config=types.GenerateContentConfig(tools=self._tools),
+                config=types.GenerateContentConfig(tools=[self.get_next_question]),
             )
 
             # Log the raw API response
