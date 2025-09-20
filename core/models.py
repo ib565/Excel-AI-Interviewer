@@ -7,26 +7,37 @@ from pydantic import BaseModel
 
 
 class Message(BaseModel):
-	"""Represents a single chat message in the transcript."""
-	role: Literal["user", "assistant", "system"]
-	content: str
-	timestamp: datetime
-	turn_index: Optional[int] = None
-	metadata: Optional[Dict[str, Any]] = None
+    """Represents a single chat message in the transcript."""
+
+    role: Literal["user", "assistant", "system"]
+    content: str
+    timestamp: datetime
+    turn_index: Optional[int] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class AIResponse(BaseModel):
-	"""Response returned by the AI adapter."""
-	text: str
-	metadata: Optional[Dict[str, Any]] = None
-	end: bool = False
+    """Response returned by the AI adapter."""
+
+    text: str
+    metadata: Optional[Dict[str, Any]] = None
+    end: bool = False
 
 
 class Question(BaseModel):
-	"""A single question from the optional bank."""
-	id: str
-	capability: str
-	difficulty: str
-	text: str
+    """A single question from the optional bank."""
+
+    id: str
+    capability: List[str]  # Changed to List[str] to match JSON structure
+    difficulty: str
+    text: str
 
 
+class InterviewState(BaseModel):
+    """Tracks the current state of an interview session."""
+
+    session_id: str
+    used_question_ids: List[str] = []
+    current_difficulty_level: str = "Easy"
+    candidate_skill_level: str = "Beginner"
+    question_count: int = 0
