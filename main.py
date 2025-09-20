@@ -118,7 +118,9 @@ def _render_sidebar(adapter_name: str) -> None:
                     min(3, question_count)
                 )
                 for q in sample_questions:
-                    st.write(f"**{q.capability}** ({q.difficulty}): {q.text[:100]}...")
+                    st.write(
+                        f"**{q.capabilities}** ({q.difficulty}): {q.text[:100]}..."
+                    )
             else:
                 st.info("No question bank found.")
 

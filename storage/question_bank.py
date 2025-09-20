@@ -13,7 +13,7 @@ class QuestionBank:
     """Service for managing and selecting questions from the question bank.
 
     This class provides methods to load questions and select them based on
-    various criteria like difficulty, capability, or randomly.
+    various criteria like difficulty, capabilities, or randomly.
     """
 
     def __init__(self, question_bank_path: Optional[str] = None):
@@ -42,7 +42,7 @@ class QuestionBank:
             for item in data:
                 question = Question(
                     id=str(item.get("id", "")),
-                    capability=item.get("capability", ""),
+                    capabilities=item.get("capabilities", ""),
                     difficulty=item.get("difficulty", ""),
                     text=item.get("text", ""),
                 )
@@ -72,7 +72,7 @@ class QuestionBank:
         return [
             q
             for q in self._questions
-            if capability_lower in [c.lower() for c in q.capability]
+            if capability_lower in [c.lower() for c in q.capabilities]
         ]
 
     def get_questions_by_capabilities(self, capabilities: List[str]) -> List[Question]:
@@ -82,7 +82,7 @@ class QuestionBank:
             q
             for q in self._questions
             if any(
-                cap_lower in [c.lower() for c in q.capability]
+                cap_lower in [c.lower() for c in q.capabilities]
                 for cap_lower in capabilities_lower
             )
         ]
@@ -118,7 +118,7 @@ class QuestionBank:
                 q
                 for q in candidates
                 if any(
-                    cap_lower in [c.lower() for c in q.capability]
+                    cap_lower in [c.lower() for c in q.capabilities]
                     for cap_lower in capabilities_lower
                 )
             ]
@@ -169,7 +169,7 @@ class QuestionBank:
         """Get all unique capabilities in the question bank."""
         capabilities = set()
         for question in self._questions:
-            capabilities.update(question.capability)
+            capabilities.update(question.capabilities)
         return sorted(list(capabilities))
 
     def get_available_difficulties(self) -> List[str]:
@@ -178,6 +178,131 @@ class QuestionBank:
         for question in self._questions:
             difficulties.add(question.difficulty)
         return sorted(list(difficulties))
+
+    def _generate_unique_id(self) -> str:
+        """Generate a unique ID for a new question."""
+        if not self._questions:
+            return "1"
+
+        # Find the maximum numeric ID and increment by 1
+        max_id = 0
+        for question in self._questions:
+            try:
+                max_id = max(max_id, int(question.id))
+            except ValueError:
+                # If ID is not numeric, skip it
+                continue
+
+        return str(max_id + 1)
+
+    def _save_questions_to_file(self) -> bool:
+        """Save all questions to the JSON file.
+
+        Returns:
+            True if save was successful, False otherwise
+        """
+        try:
+            path = Path(self._question_bank_path)
+            # Ensure parent directory exists
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Convert questions to dictionaries for JSON serialization
+            questions_data = []
+            for question in self._questions:
+                questions_data.append(
+                    {
+                        "id": question.id,
+                        "capabilities": question.capabilities,
+                        "difficulty": question.difficulty,
+                        "text": question.text,
+                    }
+                )
+
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(questions_data, f, indent=2, ensure_ascii=False)
+
+            return True
+        except Exception as e:
+            print(f"Error saving question bank: {e}")
+            return False
+
+    def add_question(
+        self,
+        text: str,
+        capabilities: List[str],
+        difficulty: str,
+        question_id: Optional[str] = None,
+    ) -> bool:
+        """Add a new question to the question bank.
+
+        Args:
+            text: The question text
+            capabilities: List of capabilities this question tests
+            difficulty: Difficulty level (e.g., "Easy", "Medium", "Hard", "Advanced")
+            question_id: Optional custom ID. If not provided, generates a unique ID.
+
+        Returns:
+            True if question was added successfully, False otherwise
+        """
+        # Validate inputs
+        if not text.strip():
+            print("Error: Question text cannot be empty")
+            return False
+
+        if not capabilities:
+            print("Error: At least one capability must be specified")
+            return False
+
+        if not difficulty.strip():
+            print("Error: Difficulty cannot be empty")
+            return False
+
+        # Validate that capabilities is a list of non-empty strings
+        if not isinstance(capabilities, list):
+            print("Error: Capabilities must be a list of strings")
+            return False
+
+        for cap in capabilities:
+            if not isinstance(cap, str) or not cap.strip():
+                print("Error: All capabilities must be non-empty strings")
+                return False
+
+        # Generate ID if not provided
+        if question_id is None:
+            question_id = self._generate_unique_id()
+        elif not question_id.strip():
+            print("Error: Question ID cannot be empty")
+            return False
+
+        # Check if ID already exists
+        existing_ids = {q.id for q in self._questions}
+        if question_id in existing_ids:
+            print(f"Error: Question ID '{question_id}' already exists")
+            return False
+
+        # Create new question
+        try:
+            new_question = Question(
+                id=question_id,
+                capabilities=[cap.strip() for cap in capabilities],  # Clean whitespace
+                difficulty=difficulty.strip(),
+                text=text.strip(),
+            )
+
+            # Add to in-memory collection
+            self._questions.append(new_question)
+
+            # Save to file
+            if not self._save_questions_to_file():
+                # If save failed, remove from memory
+                self._questions.pop()
+                return False
+
+            return True
+
+        except Exception as e:
+            print(f"Error creating question: {e}")
+            return False
 
 
 # Global instance for easy access
@@ -197,3 +322,24 @@ def reload_question_bank() -> QuestionBank:
     global _question_bank_instance
     _question_bank_instance = QuestionBank()
     return _question_bank_instance
+
+
+def add_question_to_bank(
+    text: str,
+    capabilities: List[str],
+    difficulty: str,
+    question_id: Optional[str] = None,
+) -> bool:
+    """Add a new question to the global question bank instance.
+
+    Args:
+        text: The question text
+        capabilities: List of capabilities this question tests
+        difficulty: Difficulty level (e.g., "Easy", "Medium", "Hard", "Advanced")
+        question_id: Optional custom ID. If not provided, generates a unique ID.
+
+    Returns:
+        True if question was added successfully, False otherwise
+    """
+    question_bank = get_question_bank()
+    return question_bank.add_question(text, capabilities, difficulty, question_id)

@@ -35,6 +35,6 @@ class Question(BaseModel):
     """A single question from the optional bank."""
 
     id: str
-    capability: List[str]  # Changed to List[str] to match JSON structure
+    capabilities: List[str]
     difficulty: str
     text: str

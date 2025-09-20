@@ -80,7 +80,7 @@ class GeminiAdapter:
             reply_text = response_parsed.text.strip()
 
             # Check if interview should end based on context
-            should_end = response_parsed.end
+            should_end = response_parsed.end or self._should_end_interview(messages)
 
             # Create the wrapped response
             wrapped_response = AIResponseWrapped(
@@ -161,7 +161,7 @@ class GeminiAdapter:
         - Ask specific, technical Excel questions from the provided question bank
         - Follow up on their answers with clarifying questions
         - Be conversational but professional
-        - End the interview after 3-5 questions or when appropriate
+        - End the interview after max 10 questions or when appropriate
 
         When selecting questions:
         - Start with easier questions and progress to harder ones
@@ -201,13 +201,13 @@ Select appropriate questions based on:
         return prompt
 
     def _should_end_interview(
-        self, messages: List[Message], state: Optional[Dict[str, Any]]
+        self, messages: List[Message], state: Optional[Dict[str, Any]] = None
     ) -> bool:
         """Determine if the interview should end."""
 
         # End after several exchanges
         assistant_messages = [m for m in messages if m.role == "assistant"]
-        if len(assistant_messages) >= 4:  # End after 4 AI responses
+        if len(assistant_messages) >= 10:  # End after 10 AI responses
             return True
 
         # Check state for end condition
@@ -234,5 +234,4 @@ def get_adapter() -> AIAdapter:
     The Protocol ensures that whatever this returns implements
     the AIAdapter interface.
     """
-    print("ai/adapter.py: get_adapter")
     return GeminiAdapter()
