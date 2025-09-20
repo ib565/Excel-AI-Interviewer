@@ -104,7 +104,7 @@ def _render_sidebar(adapter_name: str) -> None:
 
         if st.button("Restart session", width="stretch"):
             _restart_session()
-            st.experimental_rerun()
+            st.rerun()
 
         # Display question bank info
         question_bank = get_question_bank()
@@ -176,11 +176,6 @@ def main() -> None:
 
     _maybe_bootstrap_first_message()
 
-    if st.session_state.ended:
-        st.success(
-            "This interview session has ended. You can download the transcript or restart."
-        )
-
     # Handle input BEFORE rendering the transcript to avoid one-message lag
     user_input = st.chat_input("Your message", disabled=st.session_state.ended)
     if user_input and not st.session_state.ended:
@@ -194,6 +189,7 @@ def main() -> None:
             response: AIResponseWrapped = adapter.generate_reply(
                 _to_model_messages(st.session_state.messages), state
             )
+            logger.info("assistant_message | %s", response.text)
         except Exception as e:
             logger.error("adapter_error | %s", str(e))
             logger.debug(
@@ -225,6 +221,9 @@ def main() -> None:
 
         if response.end:
             st.session_state.ended = True
+            st.success(
+                "This interview session has ended. You can download the transcript or restart."
+            )
             save_event_line(st.session_state.session_id, "end", details=None)
 
     # Now render the transcript AFTER handling input
