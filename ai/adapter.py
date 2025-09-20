@@ -8,6 +8,7 @@ from google.genai import types
 from core.models import AIResponseWrapped, Message, Question
 from core.bridge import AIAdapter
 from storage.question_bank import get_question_bank
+from ai.prompts import render_system_prompt, render_generate_question_prompt
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -49,9 +50,6 @@ class GeminiAdapter:
         Returns:
             A dictionary with keys: id (str), text (str), difficulty (str), capabilities (List[str]).
         """
-        print("in get_next_question")
-        print(capabilities)
-        print(difficulty)
         question = self._retrieve_question(
             capabilities=capabilities, difficulty=difficulty
         )
@@ -87,7 +85,7 @@ class GeminiAdapter:
         gemini_messages = self._convert_messages_to_gemini_format(messages)
 
         # Build the system prompt based on interview context
-        system_prompt = self._build_system_prompt()
+        system_prompt = self._build_system_prompt(state)
 
         # Prepare the full prompt
         full_prompt = f"{system_prompt}\n\nConversation:\n" + "\n".join(gemini_messages)
@@ -200,47 +198,17 @@ class GeminiAdapter:
     def _build_system_prompt(self, state: Optional[Dict[str, Any]] = None) -> str:
         """Build a system prompt based on the interview state."""
 
-        # Base system prompt
-        prompt = (
-            "You are an expert Excel interviewer conducting a mock interview.\n"
-            "Your goal is to assess the candidate's Excel skills through conversation.\n\n"
-            "Guidelines:\n"
-            "- Ask specific, technical Excel questions using the available tool when needed.\n"
-            "- Follow up on their answers with clarifying questions.\n"
-            "- Be conversational but professional.\n"
-            "- End the interview after max 5 questions or when appropriate. Your last message should be a comprehensive summary of the interview with the flag [[END=true QID=none]]\n\n"
-            "Tool-use contract:\n"
-            "- When you need a new question from the bank, CALL get_next_question(capabilities?, difficulty?).\n"
-            "- If the bank has no suitable question (i.e., the tool returns an empty id or the text 'No more suitable questions are available.'), then make ANOTHER TOOL CALL to generate_question(capabilities?, difficulty?, additional_notes?).\n"
-            "  Provide 'additional_notes' as a short phrase that to guide the question generation).\n"
-            "- After composing your reply for the candidate, append a single flags line EXACTLY in this form: \n"
-            "  [[END=<true|false> QID=<question_id or none>]]\n"
-            "- Do not include the flags in the visible body of your message; put them only at the very end.\n\n"
-        )
-
-        # Add question bank context
         question_count = self.question_bank.get_question_count()
-        if question_count > 0:
-            available_capabilities = self.question_bank.get_available_capabilities()
-            available_difficulties = self.question_bank.get_available_difficulties()
+        available_capabilities = self.question_bank.get_available_capabilities()
+        available_difficulties = self.question_bank.get_available_difficulties()
+        session_id = state.get("session_id") if state else None
 
-            prompt += (
-                f"Available questions: {question_count}\n"
-                f"Capabilities: {', '.join(available_capabilities)}\n"
-                f"Difficulty levels: {', '.join(available_difficulties)}\n\n"
-                "Selection guidance:\n"
-                "- Start with easier questions and progress to harder ones.\n"
-                "- Choose questions that build on the candidate's previous answers.\n"
-                "- Avoid repeating questions within the same interview.\n"
-            )
-
-        # Add context from state if available
-        if state:
-            session_id = state.get("session_id")
-            if session_id:
-                prompt += f"\n- Session ID: {session_id}"
-
-        return prompt
+        return render_system_prompt(
+            question_count=question_count,
+            available_capabilities=available_capabilities,
+            available_difficulties=available_difficulties,
+            session_id=session_id,
+        )
 
     def _should_end_interview(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
@@ -262,7 +230,6 @@ class GeminiAdapter:
         self, capabilities: Optional[List[str]] = None, difficulty: Optional[str] = None
     ) -> Optional[Question]:
         """Retrieve a question from the question bank."""
-        print("retrieve_question")
         return self.question_bank.select_random_question(
             exclude_ids=self._used_question_ids,
             capabilities=capabilities,
@@ -319,31 +286,28 @@ class GeminiAdapter:
                 eval_criteria = list(eval_criteria)
             eval_criteria = [str(e).strip() for e in eval_criteria if str(e).strip()]
 
-            # Persist to the question bank with a predicted new id
-            new_id = self._compute_next_question_id()
-            saved = self.question_bank.add_question(
-                text=text_raw,
-                capabilities=gen_caps,
-                difficulty=gen_diff,
-                question_id=new_id,
-                evaluation_criteria=eval_criteria,
-            )
-
-            if not saved:
-                # Attempt once more with auto-id
-                fallback_save = self.question_bank.add_question(
+            # Persist to the question bank and get the new id
+            if hasattr(self.question_bank, "add_question_and_get_id"):
+                new_id = (
+                    self.question_bank.add_question_and_get_id(
+                        text=text_raw,
+                        capabilities=gen_caps,
+                        difficulty=gen_diff,
+                        question_id=None,
+                        evaluation_criteria=eval_criteria,
+                    )
+                    or ""
+                )
+            else:
+                # Backward compatibility
+                saved = self.question_bank.add_question(
                     text=text_raw,
                     capabilities=gen_caps,
                     difficulty=gen_diff,
                     question_id=None,
                     evaluation_criteria=eval_criteria,
                 )
-                if fallback_save:
-                    # Best effort to determine id: use max numeric id
-                    new_id = self._compute_highest_numeric_id()
-                else:
-                    # As a last resort, return a non-persistent question
-                    new_id = ""
+                new_id = ""
 
             if new_id:
                 self._used_question_ids.add(new_id)
@@ -371,24 +335,10 @@ class GeminiAdapter:
         additional_notes: Optional[str],
     ) -> Dict[str, Any]:
         """Call the LLM to produce a new question JSON with evaluation criteria."""
-        caps_str = ", ".join(capabilities or [])
-        notes = additional_notes.strip() if additional_notes else ""
-        diff = difficulty or "Medium"
-
-        instruction = (
-            "You are generating a single, clear Excel interview question.\n"
-            "Requirements:\n"
-            "- Target capabilities: "
-            + (caps_str if caps_str else "(use sensible Excel capability)")
-            + "\n"
-            "- Difficulty: " + diff + "\n"
-            "- Additional notes: " + (notes if notes else "none") + "\n\n"
-            "Output STRICTLY a compact JSON object with keys: \n"
-            "  text (string), capabilities (array of strings), difficulty (string), evaluation_criteria (array of strings).\n"
-            "- Do not include markdown fences or commentary.\n"
-            "- The question should be answerable conversationally and focused on Excel.\n"
-            "- The question should be general and reusable for multiple candidates."
-            "- Provide 3-6 evaluation_criteria that are specific and observable.\n"
+        instruction = render_generate_question_prompt(
+            capabilities=capabilities,
+            difficulty=difficulty,
+            additional_notes=additional_notes,
         )
 
         self.logger.debug("LLM_REQUEST_GENERATE_QUESTION | %s", instruction)
@@ -429,29 +379,9 @@ class GeminiAdapter:
             return {
                 "text": cleaned if cleaned else "",
                 "capabilities": capabilities or [],
-                "difficulty": diff,
+                "difficulty": difficulty or "Medium",
                 "evaluation_criteria": [],
             }
-
-    def _compute_next_question_id(self) -> str:
-        """Compute the next numeric question id based on current bank."""
-        ids: List[int] = []
-        for q in self.question_bank.get_all_questions():
-            try:
-                ids.append(int(q.id))
-            except Exception:
-                continue
-        next_id = (max(ids) + 1) if ids else 1
-        return str(next_id)
-
-    def _compute_highest_numeric_id(self) -> str:
-        ids: List[int] = []
-        for q in self.question_bank.get_all_questions():
-            try:
-                ids.append(int(q.id))
-            except Exception:
-                continue
-        return str(max(ids) if ids else 0)
 
     def _parse_flags_and_clean_text(self, text: str) -> Tuple[str, bool, Optional[str]]:
         """Extract end/QID flags from the response tail and return cleaned text.

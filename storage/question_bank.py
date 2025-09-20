@@ -40,9 +40,18 @@ class QuestionBank:
 
             self._questions = []
             for item in data:
+                raw_caps = item.get("capabilities", [])
+                if isinstance(raw_caps, str):
+                    capabilities: List[str] = (
+                        [raw_caps.strip()] if raw_caps.strip() else []
+                    )
+                elif isinstance(raw_caps, list):
+                    capabilities = [str(c).strip() for c in raw_caps if str(c).strip()]
+                else:
+                    capabilities = []
                 question = Question(
                     id=str(item.get("id", "")),
-                    capabilities=item.get("capabilities", ""),
+                    capabilities=capabilities,
                     difficulty=item.get("difficulty", ""),
                     text=item.get("text", ""),
                     evaluation_criteria=item.get("evaluation_criteria", []),
@@ -111,7 +120,9 @@ class QuestionBank:
             candidates = [q for q in candidates if q.id not in exclude_ids]
 
         if difficulty:
-            candidates = self.get_questions_by_difficulty(difficulty)
+            candidates = [
+                q for q in candidates if q.difficulty.lower() == difficulty.lower()
+            ]
 
         if capabilities:
             capabilities_lower = [c.lower() for c in capabilities]
@@ -154,10 +165,20 @@ class QuestionBank:
             candidates = [q for q in candidates if q.id not in exclude_ids]
 
         if difficulty:
-            candidates = self.get_questions_by_difficulty(difficulty)
+            candidates = [
+                q for q in candidates if q.difficulty.lower() == difficulty.lower()
+            ]
 
         if capabilities:
-            candidates = self.get_questions_by_capabilities(capabilities)
+            capabilities_lower = [c.lower() for c in capabilities]
+            candidates = [
+                q
+                for q in candidates
+                if any(
+                    cap_lower in [c.lower() for c in q.capabilities]
+                    for cap_lower in capabilities_lower
+                )
+            ]
 
         # Randomly sample without replacement
         available_count = len(candidates)
@@ -302,6 +323,29 @@ class QuestionBank:
         except Exception as e:
             print(f"Error creating question: {e}")
             return False
+
+    def add_question_and_get_id(
+        self,
+        text: str,
+        capabilities: List[str],
+        difficulty: str,
+        question_id: Optional[str] = None,
+        evaluation_criteria: List[str] = [],
+    ) -> Optional[str]:
+        """Add a new question and return its ID if successful.
+
+        If no question_id is provided, a unique one is generated.
+        Returns None on failure.
+        """
+        new_id = question_id or self._generate_unique_id()
+        ok = self.add_question(
+            text=text,
+            capabilities=capabilities,
+            difficulty=difficulty,
+            question_id=new_id,
+            evaluation_criteria=evaluation_criteria,
+        )
+        return new_id if ok else None
 
 
 # Global instance for easy access
