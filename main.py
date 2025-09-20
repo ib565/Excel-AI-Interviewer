@@ -172,16 +172,48 @@ def _transcript_download() -> None:
             content = message.get("content", "")
             cleaned_transcript.append(f"{role}: {content}")
 
-        # Join with double newlines for readability
-        data = "\n\n".join(cleaned_transcript)
+        # Plain text format
+        txt_data = "\n\n".join(cleaned_transcript)
+
+        # Add performance summary if available
+        if st.session_state.performance_summary:
+            txt_data += (
+                "\n\n" + "=" * 50 + "\nPERFORMANCE SUMMARY\n" + "=" * 50 + "\n\n"
+            )
+            txt_data += st.session_state.performance_summary
 
         st.download_button(
             label="Download transcript (.txt)",
-            data=data,
+            data=txt_data,
             file_name=f"transcript_{st.session_state.session_id}.txt",
             mime="text/plain",
             width="stretch",
         )
+
+        # Markdown format
+        md_transcript = []
+        for message in st.session_state.messages:
+            role = message.get("role", "")
+            content = message.get("content", "")
+            if role == "assistant":
+                md_transcript.append(f"🤖 **Assistant:**\n{content}")
+            elif role == "user":
+                md_transcript.append(f"👤 **User:**\n{content}")
+
+        md_data = "\n\n---\n\n".join(md_transcript)
+
+        # Add performance summary in markdown format if available
+        if st.session_state.performance_summary:
+            md_data += "\n\n---\n\n" + st.session_state.performance_summary
+
+        st.download_button(
+            label="Download transcript (.md)",
+            data=md_data,
+            file_name=f"transcript_{st.session_state.session_id}.md",
+            mime="text/markdown",
+            width="stretch",
+        )
+
     except Exception:
         st.warning("Transcript not available yet.")
 
