@@ -1,0 +1,193 @@
+from __future__ import annotations
+
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List
+from uuid import uuid4
+
+import streamlit as st
+
+from config import (
+    APP_NAME,
+    QUESTION_BANK_PATH,
+    ensure_app_dirs,
+    get_session_log_path,
+    get_session_transcript_path,
+)
+from core.bridge import load_ai_adapter
+from core.models import AIResponse, Message
+from storage.transcripts import save_event_line, save_message_line
+
+
+st.set_page_config(page_title=APP_NAME, layout="wide")
+
+
+def _load_question_bank() -> List[Dict[str, Any]]:
+    path = Path(QUESTION_BANK_PATH)
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+
+def _init_session_state() -> None:
+    if "session_id" not in st.session_state:
+        st.session_state.session_id = str(uuid4())
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "ended" not in st.session_state:
+        st.session_state.ended = False
+    if "question_bank" not in st.session_state:
+        st.session_state.question_bank = _load_question_bank()
+
+
+def _get_logger() -> logging.Logger:
+    logger = logging.getLogger(f"session.{st.session_state.session_id}")
+    if not logger.handlers:
+        logger.setLevel(logging.INFO)
+        fh = logging.FileHandler(
+            get_session_log_path(st.session_state.session_id), encoding="utf-8"
+        )
+        formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+    return logger
+
+
+def _append_message(
+    role: str, content: str, metadata: Dict[str, Any] | None = None
+) -> None:
+    msg = Message(
+        role=role,
+        content=content,
+        timestamp=datetime.now(timezone.utc),
+        metadata=metadata,
+    )
+    st.session_state.messages.append(msg.model_dump())
+    save_message_line(
+        session_id=st.session_state.session_id,
+        role=role,
+        content=content,
+        metadata=metadata,
+    )
+
+
+def _render_header() -> None:
+    st.title(APP_NAME)
+    st.caption(
+        "Proof-of-concept: conversational Excel interviewer. AI adapter is pluggable."
+    )
+
+
+def _render_sidebar(adapter_name: str) -> None:
+    with st.sidebar:
+        st.subheader("Interview Controls")
+        st.text(f"Adapter: {adapter_name}")
+
+        if st.button("Restart session", width="stretch"):
+            _restart_session()
+            st.experimental_rerun()
+
+        with st.expander("Question bank (sample)", expanded=False):
+            if st.session_state.question_bank:
+                st.dataframe(st.session_state.question_bank, width="stretch")
+            else:
+                st.info("No question bank found.")
+
+        if st.session_state.messages:
+            _transcript_download()
+
+
+def _restart_session() -> None:
+    old_session = st.session_state.session_id
+    save_event_line(session_id=old_session, event="restart", details=None)
+    st.session_state.session_id = str(uuid4())
+    st.session_state.messages = []
+    st.session_state.ended = False
+
+
+def _transcript_download() -> None:
+    path = get_session_transcript_path(st.session_state.session_id)
+    try:
+        data = Path(path).read_text(encoding="utf-8")
+        st.download_button(
+            label="Download transcript (.jsonl)",
+            data=data,
+            file_name=f"transcript_{st.session_state.session_id}.jsonl",
+            mime="application/json",
+            width="stretch",
+        )
+    except Exception:
+        st.warning("Transcript not available yet.")
+
+
+def _to_model_messages(raw_messages: List[Dict[str, Any]]) -> List[Message]:
+    return [Message(**m) for m in raw_messages]
+
+
+def _maybe_bootstrap_first_message() -> None:
+    if not st.session_state.messages and not st.session_state.ended:
+        content = (
+            "To kick off, please share a brief self-assessment of your Excel skills, "
+            "experience, and comfort areas."
+        )
+        save_event_line(st.session_state.session_id, "bootstrap", details=None)
+        _append_message("assistant", content)
+
+
+def main() -> None:
+    ensure_app_dirs()
+    _init_session_state()
+    logger = _get_logger()
+    adapter = load_ai_adapter()
+    adapter_name = getattr(adapter, "__class__", type("", (), {})).__name__
+
+    _render_header()
+    _render_sidebar(adapter_name)
+
+    _maybe_bootstrap_first_message()
+
+    if st.session_state.ended:
+        st.success(
+            "This interview session has ended. You can download the transcript or restart."
+        )
+
+    # Handle input BEFORE rendering the transcript to avoid one-message lag
+    user_input = st.chat_input("Your message", disabled=st.session_state.ended)
+    if user_input and not st.session_state.ended:
+        logger.info("user_message | %s", user_input)
+        _append_message("user", user_input)
+
+        state: Dict[str, Any] = {
+            "question_bank": st.session_state.question_bank,
+            "session_id": st.session_state.session_id,
+        }
+        try:
+            response: AIResponse = adapter.generate_reply(
+                _to_model_messages(st.session_state.messages), state
+            )
+        except Exception as e:
+            logger.exception("adapter_error: %s", e)
+            response = AIResponse(text="Adapter error: using fallback reply.")
+
+        logger.info("assistant_message | %s", response.text)
+        _append_message("assistant", response.text, metadata=response.metadata)
+
+        if response.end:
+            st.session_state.ended = True
+            save_event_line(st.session_state.session_id, "end", details=None)
+
+    # Now render the transcript AFTER handling input
+    container = st.container()
+    with container:
+        for m in st.session_state.messages:
+            with st.chat_message(m["role"]):
+                st.markdown(m["content"])
+
+
+if __name__ == "__main__":
+    main()
