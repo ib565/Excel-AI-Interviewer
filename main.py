@@ -16,7 +16,7 @@ from config import (
     get_session_log_path,
     get_session_transcript_path,
 )
-from core.bridge import load_ai_adapter
+from core.bridge import load_ai_agent
 from core.models import AIResponseWrapped, Message
 from storage.transcripts import save_event_line, save_message_line
 from storage.question_bank import get_question_bank
@@ -62,10 +62,10 @@ def _get_logger() -> logging.Logger:
         ch.setFormatter(formatter)
         logger.addHandler(ch)
 
-    # Set up the AI adapter logger
-    ai_logger = logging.getLogger("ai.adapter.gemini")
+    # Set up the AI agent logger
+    ai_logger = logging.getLogger("ai.agent.gemini")
     if not ai_logger.handlers:
-        ai_logger.setLevel(logging.DEBUG)  # More detailed logging for AI adapter
+        ai_logger.setLevel(logging.DEBUG)  # More detailed logging for AI agent
         ai_logger.addHandler(fh)  # Use the same file handler
         ai_logger.addHandler(ch)  # Use the same console handler
         ai_logger.propagate = False  # Prevent duplicate logs
@@ -97,14 +97,14 @@ def _append_message(
 def _render_header() -> None:
     st.title(APP_NAME)
     st.caption(
-        "Proof-of-concept: conversational Excel interviewer. AI adapter is pluggable."
+        "Proof-of-concept: conversational Excel interviewer. AI agent is pluggable."
     )
 
 
-def _render_sidebar(adapter_name: str) -> None:
+def _render_sidebar(agent_name: str) -> None:
     with st.sidebar:
         st.subheader("Interview Controls")
-        st.text(f"Adapter: {adapter_name}")
+        st.text(f"Agent: {agent_name}")
 
         if st.button("Restart session", width="stretch"):
             _restart_session()
@@ -185,11 +185,11 @@ def main() -> None:
     ensure_app_dirs()
     _init_session_state()
     logger = _get_logger()
-    adapter = load_ai_adapter()
-    adapter_name = adapter.name
+    agent = load_ai_agent()
+    agent_name = agent.name
 
     _render_header()
-    _render_sidebar(adapter_name)
+    _render_sidebar(agent_name)
 
     _maybe_bootstrap_first_message()
 
@@ -203,13 +203,13 @@ def main() -> None:
             "session_id": st.session_state.session_id,
         }
         try:
-            response: AIResponseWrapped = adapter.generate_reply(
+            response: AIResponseWrapped = agent.generate_reply(
                 _to_model_messages(st.session_state.messages), state
             )
         except Exception as e:
-            logger.error("adapter_error | %s", str(e))
+            logger.error("agent_error | %s", str(e))
             logger.debug(
-                "adapter_error_details | %s",
+                "agent_error_details | %s",
                 json.dumps(
                     {
                         "error_type": type(e).__name__,
@@ -219,7 +219,7 @@ def main() -> None:
                     indent=2,
                 ),
             )
-            response = AIResponseWrapped(text="Adapter error: using fallback reply.")
+            response = AIResponseWrapped(text="Agent error: using fallback reply.")
 
         # Log the full assistant response details
         logger.info(
@@ -243,7 +243,7 @@ def main() -> None:
             if not st.session_state.evaluation_generated:
                 try:
                     st.session_state.performance_summary = (
-                        adapter.generate_performance_summary(
+                        agent.generate_performance_summary(
                             _to_model_messages(st.session_state.messages)
                         )
                     )

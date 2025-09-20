@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Protocol
 from core.models import AIResponseWrapped, Message
 
 
-class AIAdapter(Protocol):
+class AIAgent(Protocol):
     """Protocol that external AI modules must implement.
 
     The UI will pass prior messages and an optional state dict and expect an AIResponse.
@@ -14,7 +14,7 @@ class AIAdapter(Protocol):
 
     @property
     def name(self) -> str:
-        """Return a user-friendly name for this adapter."""
+        """Return a user-friendly name for this agent."""
         ...
 
     def generate_reply(
@@ -22,34 +22,34 @@ class AIAdapter(Protocol):
     ) -> AIResponseWrapped: ...
 
 
-def load_ai_adapter() -> AIAdapter:
-    """Load an AI adapter from ai.adapter if present, otherwise return a local stub.
+def load_ai_agent() -> AIAgent:
+    """Load an AI agent from ai.agent if present, otherwise return a local stub.
 
     Expected external module contract:
-    - File: ai/adapter.py
-    - Callable: get_adapter() -> AIAdapter
+    - File: ai/agent.py
+    - Callable: get_agent() -> AIAgent
     """
     try:
-        module = import_module("ai.adapter")
-        get_adapter = getattr(module, "get_adapter", None)
-        print("get_adapter")
-        print(get_adapter)
-        if callable(get_adapter):
-            return get_adapter()
+        module = import_module("ai.agent")
+        get_agent = getattr(module, "get_agent", None)
+        print("get_agent")
+        print(get_agent)
+        if callable(get_agent):
+            return get_agent()
     except Exception as e:
-        print("load_ai_adapter: Exception", e)
+        print("load_ai_agent: Exception", e)
         # Fall back to local stub below
-        print("load_ai_adapter: Fall back to local stub")
+        print("load_ai_agent: Fall back to local stub")
 
-    return _LocalEchoAdapter()
+    return _LocalEchoAgent()
 
 
-class _LocalEchoAdapter:
-    """Simple built-in stub so the UI is testable without an AI backend."""
+class _LocalEchoAgent:
+    """Simple built-in stub so the UI is testable without an AI agent."""
 
     @property
     def name(self) -> str:
-        """Return user-friendly name for this adapter."""
+        """Return user-friendly name for this agent."""
         return "Local Echo"
 
     def generate_reply(
@@ -62,7 +62,7 @@ class _LocalEchoAdapter:
         if last_user is None:
             return AIResponseWrapped(
                 text="Hello! I'm a stubbed assistant. Tell me about your Excel skills.",
-                metadata={"adapter": "local_echo_stub"},
+                metadata={"agent": "local_echo_stub"},
                 end=False,
             )
 
@@ -75,6 +75,6 @@ class _LocalEchoAdapter:
 
         return AIResponseWrapped(
             text=f"{prefix}: I received your message — '{last_user.content}'.",
-            metadata={"adapter": "local_echo_stub"},
+            metadata={"agent": "local_echo_stub"},
             end=False,
         )

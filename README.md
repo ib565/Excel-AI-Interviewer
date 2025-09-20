@@ -24,7 +24,7 @@ This AI-driven system conducts structured Excel interviews through natural conve
 - **📊 Intelligent Evaluation**: Structured rubric-based assessment with confidence scoring
 - **🔄 Adaptive Difficulty**: Questions scale based on demonstrated proficiency
 - **📈 Performance Analytics**: Detailed feedback reports with specific improvement recommendations
-- **🔧 Modular Architecture**: Pluggable AI adapters supporting multiple LLM providers
+- **🔧 Modular Architecture**: Pluggable AI agents supporting multiple LLM providers
 - **💾 Local Persistence**: Complete transcript storage with metadata preservation
 
 ## 🏗️ Architecture
@@ -33,7 +33,7 @@ This AI-driven system conducts structured Excel interviews through natural conve
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Streamlit UI  │────│   Core Bridge   │────│   AI Adapter    │
+│   Streamlit UI  │────│   Core Bridge   │────│   AI Agent      │
 │                 │    │  (Protocol)     │    │  (Gemini/Claude)│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
@@ -58,7 +58,7 @@ This AI-driven system conducts structured Excel interviews through natural conve
 - Session controls and transcript download
 - Performance summary visualization
 
-#### 🔌 AI Adapter System
+#### 🔌 AI Agent System
 - **Protocol-based design** for easy provider switching
 - **Function calling** for structured question retrieval
 - **Structured outputs** for consistent evaluation
@@ -89,7 +89,7 @@ This AI-driven system conducts structured Excel interviews through natural conve
 
 ### Design Decisions
 
-- **Adapter Pattern**: Enables easy swapping between AI providers (Gemini, OpenAI, Claude)
+- **Agent Pattern**: Enables easy swapping between AI providers (Gemini, OpenAI, Claude)
 - **Protocol-Based Architecture**: Ensures interface consistency across implementations
 - **Local-First Storage**: Simplifies deployment and enables offline operation
 - **Streaming Transcripts**: JSONL format for efficient append operations
@@ -191,11 +191,11 @@ ExcelInterviewerAI/
 ├── main.py                 # Streamlit application entry point
 ├── config.py              # Configuration and path management
 ├── core/                  # Core business logic
-│   ├── bridge.py         # AI adapter protocol and loading
+│   ├── bridge.py         # AI agent protocol and loading
 │   ├── models.py         # Pydantic data models
 │   └── utils.py          # Utility functions
 ├── ai/                    # AI-specific components
-│   ├── adapter.py        # Gemini AI adapter implementation
+│   ├── agent.py          # Gemini AI agent implementation
 │   └── prompts.py        # LLM prompt templates
 ├── storage/               # Data persistence layer
 │   ├── question_bank.py  # Question bank management
@@ -210,9 +210,9 @@ ExcelInterviewerAI/
 
 ## 🔍 Key Design Patterns
 
-### Adapter Protocol
+### Agent Protocol
 ```python
-class AIAdapter(Protocol):
+class AIAgent(Protocol):
     @property
     def name(self) -> str: ...
     def generate_reply(self, messages: List[Message], state: Optional[Dict]) -> AIResponseWrapped: ...

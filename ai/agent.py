@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from google import genai
 from google.genai import types
 from core.models import AIResponseWrapped, Message, Question
-from core.bridge import AIAdapter
+from core.bridge import AIAgent
 from core.utils import parse_response_flags_and_clean_text
 from storage.question_bank import get_question_bank
 from ai.prompts import (
@@ -19,12 +19,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class GeminiAdapter:
-    """Gemini-based AI adapter implementing the AIAdapter Protocol."""
+class GeminiAgent:
+    """Gemini-based AI agent implementing the AIAgent Protocol."""
 
     @property
     def name(self) -> str:
-        """Return user-friendly name for this adapter."""
+        """Return user-friendly name for this agent."""
         return "Gemini AI"
 
     def __init__(self):
@@ -36,7 +36,7 @@ class GeminiAdapter:
         self._used_question_ids: Set[str] = set()
         # Set up logger
         self.logger = logging.getLogger(
-            "ai.adapter.gemini"
+            "ai.agent.gemini"
         )  # Register available tools for function calling
 
     def get_next_question(
@@ -82,7 +82,7 @@ class GeminiAdapter:
     ) -> AIResponseWrapped:
         """Generate a response using Gemini AI.
 
-        This method signature MUST match the AIAdapter Protocol exactly.
+        This method signature MUST match the AIAgent Protocol exactly.
         The Protocol ensures type safety and interface consistency.
         """
 
@@ -138,7 +138,7 @@ class GeminiAdapter:
             wrapped_response = AIResponseWrapped(
                 text=cleaned_text,
                 metadata={
-                    "adapter": "gemini",
+                    "agent": "gemini",
                     "model": self.model,
                     "tokens_used": getattr(response, "usage", {}).get(
                         "total_tokens", 0
@@ -185,7 +185,7 @@ class GeminiAdapter:
             return AIResponseWrapped(
                 text=f"I apologize, but I'm having trouble connecting to Gemini right now. Error: {str(e)}",
                 metadata={
-                    "adapter": "gemini",
+                    "agent": "gemini",
                     "error": str(e),
                     "error_type": type(e).__name__,
                 },
@@ -456,11 +456,11 @@ class GeminiAdapter:
         return "\n\n".join(conversation_lines)
 
 
-def get_adapter() -> AIAdapter:
-    """Factory function that returns the Gemini adapter.
+def get_agent() -> AIAgent:
+    """Factory function that returns the Gemini agent.
 
     This function signature is part of the Protocol contract.
     The Protocol ensures that whatever this returns implements
-    the AIAdapter interface.
+    the AIAgent interface.
     """
-    return GeminiAdapter()
+    return GeminiAgent()

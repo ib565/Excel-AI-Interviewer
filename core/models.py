@@ -17,7 +17,7 @@ class Message(BaseModel):
 
 
 class AIResponseWrapped(BaseModel):
-    """Response returned by the AI adapter."""
+    """Response returned by the AI agent."""
 
     text: str
     metadata: Optional[Dict[str, Any]] = None
@@ -25,7 +25,7 @@ class AIResponseWrapped(BaseModel):
 
 
 class AIResponse(BaseModel):
-    """Response returned by the AI adapter."""
+    """Response returned by the AI agent."""
 
     text: str
     end: bool
