@@ -144,14 +144,23 @@ def _restart_session() -> None:
 
 
 def _transcript_download() -> None:
-    path = get_session_transcript_path(st.session_state.session_id)
     try:
-        data = Path(path).read_text(encoding="utf-8")
+        # Use current session state messages instead of loading from disk
+        # to ensure we get the most up-to-date transcript
+        cleaned_transcript = []
+        for message in st.session_state.messages:
+            role = message.get("role", "").title()
+            content = message.get("content", "")
+            cleaned_transcript.append(f"{role}: {content}")
+
+        # Join with double newlines for readability
+        data = "\n\n".join(cleaned_transcript)
+
         st.download_button(
-            label="Download transcript (.jsonl)",
+            label="Download transcript (.txt)",
             data=data,
-            file_name=f"transcript_{st.session_state.session_id}.jsonl",
-            mime="application/json",
+            file_name=f"transcript_{st.session_state.session_id}.txt",
+            mime="text/plain",
             width="stretch",
         )
     except Exception:
