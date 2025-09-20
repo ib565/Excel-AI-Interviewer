@@ -45,6 +45,7 @@ class QuestionBank:
                     capabilities=item.get("capabilities", ""),
                     difficulty=item.get("difficulty", ""),
                     text=item.get("text", ""),
+                    evaluation_criteria=item.get("evaluation_criteria", []),
                 )
                 self._questions.append(question)
 
@@ -215,6 +216,7 @@ class QuestionBank:
                         "capabilities": question.capabilities,
                         "difficulty": question.difficulty,
                         "text": question.text,
+                        "evaluation_criteria": question.evaluation_criteria,
                     }
                 )
 
@@ -232,6 +234,7 @@ class QuestionBank:
         capabilities: List[str],
         difficulty: str,
         question_id: Optional[str] = None,
+        evaluation_criteria: List[str] = [],
     ) -> bool:
         """Add a new question to the question bank.
 
@@ -240,7 +243,7 @@ class QuestionBank:
             capabilities: List of capabilities this question tests
             difficulty: Difficulty level (e.g., "Easy", "Medium", "Hard", "Advanced")
             question_id: Optional custom ID. If not provided, generates a unique ID.
-
+            evaluation_criteria: List of evaluation criteria for the question
         Returns:
             True if question was added successfully, False otherwise
         """
@@ -282,6 +285,7 @@ class QuestionBank:
                 capabilities=[cap.strip() for cap in capabilities],  # Clean whitespace
                 difficulty=difficulty.strip(),
                 text=text.strip(),
+                evaluation_criteria=evaluation_criteria,
             )
 
             # Add to in-memory collection
@@ -324,6 +328,7 @@ def add_question_to_bank(
     capabilities: List[str],
     difficulty: str,
     question_id: Optional[str] = None,
+    evaluation_criteria: List[str] = [],
 ) -> bool:
     """Add a new question to the global question bank instance.
 
@@ -332,9 +337,11 @@ def add_question_to_bank(
         capabilities: List of capabilities this question tests
         difficulty: Difficulty level (e.g., "Easy", "Medium", "Hard", "Advanced")
         question_id: Optional custom ID. If not provided, generates a unique ID.
-
+        evaluation_criteria: List of evaluation criteria for the question
     Returns:
         True if question was added successfully, False otherwise
     """
     question_bank = get_question_bank()
-    return question_bank.add_question(text, capabilities, difficulty, question_id)
+    return question_bank.add_question(
+        text, capabilities, difficulty, question_id, evaluation_criteria
+    )

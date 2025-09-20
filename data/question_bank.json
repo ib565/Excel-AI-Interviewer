@@ -3,120 +3,243 @@
     "id": 1,
     "capabilities": ["Formulas"],
     "difficulty": "Easy",
-    "text": "Explain the difference between relative, absolute and mixed references. Give an example formula that behaves differently when copied across cells and explain why."
+    "text": "Explain the difference between relative, absolute and mixed references. Give an example formula that behaves differently when copied across cells and explain why.",
+    "evaluation_criteria": [
+      "Defines relative (A1), absolute ($A$1), and mixed ($A1, A$1) correctly",
+      "Explains $ locks row/column",
+      "Provides a formula that changes when copied and shows how",
+      "Explains copy across rows/columns behavior clearly"
+    ]
   },
   {
     "id": 2,
     "capabilities": ["Lookups"],
     "difficulty": "Medium",
-    "text": "Compare VLOOKUP, INDEX+MATCH, and XLOOKUP: when would you choose each? Describe a scenario where VLOOKUP fails and show how you'd fix it."
+    "text": "Compare VLOOKUP, INDEX+MATCH, and XLOOKUP: when would you choose each? Describe a scenario where VLOOKUP fails and show how you'd fix it.",
+    "evaluation_criteria": [
+      "Distinguishes capabilities/limits of VLOOKUP, INDEX+MATCH, XLOOKUP",
+      "Notes VLOOKUP left-lookup and col-index fragility",
+      "Gives failure scenario and fixes with INDEX+MATCH or XLOOKUP",
+      "Mentions exact vs approximate match and when to choose each"
+    ]
   },
   {
     "id": 3,
     "capabilities": ["Lookups", "Dynamic arrays"],
     "difficulty": "Hard",
-    "text": "How would you perform a lookup with multiple criteria (e.g., find Sales for Product=A and Region=B) using formulas only? Provide at least two approaches — one using dynamic array functions and one compatible with older Excel."
+    "text": "How would you perform a lookup with multiple criteria (e.g., find Sales for Product=A and Region=B) using formulas only? Provide at least two approaches — one using dynamic array functions and one compatible with older Excel.",
+    "evaluation_criteria": [
+      "Dynamic array method (FILTER/XLOOKUP or INDEX with (crit1)*(crit2))",
+      "Legacy method (INDEX/MATCH with MATCH(1,(crit1)*(crit2),0) or concat key)",
+      "Mentions CSE requirement for legacy arrays if applicable",
+      "Returns correct field and handles exact matches"
+    ]
   },
   {
     "id": 4,
     "capabilities": ["Pivots"],
     "difficulty": "Medium",
-    "text": "Design a PivotTable (describe fields, layout and steps) to show monthly revenue by product and also display the Top 3 products per month."
+    "text": "Design a PivotTable (describe fields, layout and steps) to show monthly revenue by product and also display the Top 3 products per month.",
+    "evaluation_criteria": [
+      "Fields: Date grouped to Months, Product, Sum of Revenue",
+      "Applies Top 3 value filter per month (not overall)",
+      "Describes Rows/Columns/Values layout and steps",
+      "Notes sorting and grouping details"
+    ]
   },
   {
     "id": 5,
     "capabilities": ["Power Query"],
     "difficulty": "Hard",
-    "text": "You receive multiple CSV files with slightly different column names and mixed date formats. Describe a robust Power Query workflow to combine, normalize column names and date formats, handle errors, and load a clean table ready for analysis."
+    "text": "You receive multiple CSV files with slightly different column names and mixed date formats. Describe a robust Power Query workflow to combine, normalize column names and date formats, handle errors, and load a clean table ready for analysis.",
+    "evaluation_criteria": [
+      "Uses From Folder and a sample-file function to combine",
+      "Standardizes column names (transform/mapping table)",
+      "Normalizes dates (type with locale, try/otherwise)",
+      "Handles errors (Keep/Remove errors) and logs issues",
+      "Loads clean table and sets refresh behavior"
+    ]
   },
   {
     "id": 6,
     "capabilities": ["Data modeling"],
     "difficulty": "Advanced",
-    "text": "Write (or describe) a DAX measure to calculate a rolling 12-month sales total that correctly handles sparse months and filter context. Explain how you'd validate that measure against a simple SUM."
+    "text": "Write (or describe) a DAX measure to calculate a rolling 12-month sales total that correctly handles sparse months and filter context. Explain how you'd validate that measure against a simple SUM.",
+    "evaluation_criteria": [
+      "Uses CALCULATE with DATESINPERIOD/DATEADD over [Total Sales]",
+      "Requires a marked Date table; handles missing months",
+      "Uses MAX date in context for 12-month window",
+      "Validation plan vs manual SUM over explicit date range"
+    ]
   },
   {
     "id": 7,
     "capabilities": ["VBA", "Error handling"],
     "difficulty": "Hard",
-    "text": "Write (or outline) a VBA macro that loops through every worksheet in a workbook, finds all formulas in columns A:C and replaces them with their current values. Explain how you'd add error handling, logging and a safe-undo/backup strategy."
+    "text": "Write (or outline) a VBA macro that loops through every worksheet in a workbook, finds all formulas in columns A:C and replaces them with their current values. Explain how you'd add error handling, logging and a safe-undo/backup strategy.",
+    "evaluation_criteria": [
+      "Loops sheets, targets A:C, uses SpecialCells(xlCellTypeFormulas)",
+      "Replaces formulas with values safely; skips if none",
+      "Error handling with On Error GoTo; logs sheet/count/time",
+      "Backup/undo strategy (SaveCopyAs or snapshot)",
+      "Considers protected/hidden sheets"
+    ]
   },
   {
     "id": 8,
     "capabilities": ["Conditional formatting", "Dates & times"],
     "difficulty": "Medium",
-    "text": "How would you use a single conditional formatting rule to highlight entire rows where the Due Date is within the next 7 days and the Status column is blank? Provide the formula you'd use and explain application scope."
+    "text": "How would you use a single conditional formatting rule to highlight entire rows where the Due Date is within the next 7 days and the Status column is blank? Provide the formula you'd use and explain application scope.",
+    "evaluation_criteria": [
+      "Provides one CF formula with locked columns for Due/Status",
+      "Uses TODAY() and 7-day window correctly",
+      "Explains Applies To range to highlight full rows",
+      "Clarifies blank test (ISBLANK vs \"\") and row anchoring"
+    ]
   },
   {
     "id": 9,
     "capabilities": ["Charts", "Tables"],
     "difficulty": "Medium",
-    "text": "Explain how to create a dynamic chart that updates when a user selects a month from a drop-down. Describe two methods: one using named dynamic ranges and one using Excel Tables/structured references (and which you prefer)."
+    "text": "Explain how to create a dynamic chart that updates when a user selects a month from a drop-down. Describe two methods: one using named dynamic ranges and one using Excel Tables/structured references (and which you prefer).",
+    "evaluation_criteria": [
+      "Named ranges approach with INDEX/MATCH (avoids OFFSET)",
+      "Table/PivotChart or FILTER-based approach with slicer/dropdown",
+      "Series references update with selection",
+      "States preference with rationale (maintainability/perf)"
+    ]
   },
   {
     "id": 10,
     "capabilities": ["Data cleaning"],
     "difficulty": "Medium",
-    "text": "Given a column of inconsistent email entries and phone numbers, describe the formulas and Excel features you'd use to (a) extract domain names from emails, (b) standardize phone numbers to +CC-XXXXXXXXXX format, and (c) detect/remove invalid entries."
+    "text": "Given a column of inconsistent email entries and phone numbers, describe the formulas and Excel features you'd use to (a) extract domain names from emails, (b) standardize phone numbers to +CC-XXXXXXXXXX format, and (c) detect/remove invalid entries.",
+    "evaluation_criteria": [
+      "Extracts email domain (TEXTAFTER or MID/FIND) with cleanup/errors",
+      "Strips non-digits and formats phone to +CC-XXXXXXXXXX",
+      "Flags invalids (email has one @ and dot; phone length rules)",
+      "Uses Data Validation/Power Query or formulas to remove invalids"
+    ]
   },
   {
     "id": 11,
     "capabilities": ["Dates & times"],
     "difficulty": "Medium",
-    "text": "How would you calculate exact tenure between Hire Date and End Date as 'Y years, M months, D days'? How would you calculate total business days of tenure excluding a given set of public holidays?"
+    "text": "How would you calculate exact tenure between Hire Date and End Date as 'Y years, M months, D days'? How would you calculate total business days of tenure excluding a given set of public holidays?",
+    "evaluation_criteria": [
+      "Uses DATEDIF for years, months, days and concatenates string",
+      "Handles blank End Date using TODAY()",
+      "Business days via NETWORKDAYS/NETWORKDAYS.INTL with holidays",
+      "Notes inclusive counting/weekend patterns"
+    ]
   },
   {
     "id": 12,
     "capabilities": ["Dynamic arrays", "Lookups"],
     "difficulty": "Hard",
-    "text": "Using dynamic array functions (UNIQUE, FILTER, SORT, INDEX) produce the top 5 salespeople by total sales for a selected region showing name and total. Then describe how to achieve the same result in legacy Excel without dynamic arrays."
+    "text": "Using dynamic array functions (UNIQUE, FILTER, SORT, INDEX) produce the top 5 salespeople by total sales for a selected region showing name and total. Then describe how to achieve the same result in legacy Excel without dynamic arrays.",
+    "evaluation_criteria": [
+      "DA: UNIQUE(FILTER…), totals via SUMIFS/BYROW, SORT, TAKE 5",
+      "Returns name+total; driven by a region selector",
+      "Legacy: PivotTable Top 5 or SUMIFS + LARGE + INDEX/MATCH",
+      "Mentions handling of ties/formatting"
+    ]
   },
   {
     "id": 13,
     "capabilities": ["Error handling"],
     "difficulty": "Easy",
-    "text": "What steps and functions do you use to handle and debug common formula errors (#N/A, #REF!, #VALUE!, #DIV/0!)? Give examples of when to use IFERROR vs IFNA and how to trace precedents/dependents."
+    "text": "What steps and functions do you use to handle and debug common formula errors (#N/A, #REF!, #VALUE!, #DIV/0!)? Give examples of when to use IFERROR vs IFNA and how to trace precedents/dependents.",
+    "evaluation_criteria": [
+      "Explains causes of #N/A, #REF!, #VALUE!, #DIV/0!",
+      "Uses IFNA for not-found only; IFERROR for general catch",
+      "Avoids masking real errors; gives examples",
+      "Uses Evaluate Formula, Trace Precedents/Dependents, F9"
+    ]
   },
   {
     "id": 14,
     "capabilities": ["Statistics"],
     "difficulty": "Hard",
-    "text": "Describe how to run a linear regression in Excel, interpret R² and p-values, and explain differences between using Analysis ToolPak's Regression and the LINEST function. When would you prefer one approach over the other?"
+    "text": "Describe how to run a linear regression in Excel, interpret R² and p-values, and explain differences between using Analysis ToolPak's Regression and the LINEST function. When would you prefer one approach over the other?",
+    "evaluation_criteria": [
+      "Shows steps for ToolPak Regression and LINEST (with stats)",
+      "Interprets R^2 and p-values for significance",
+      "Compares ToolPak (static) vs LINEST (dynamic)",
+      "States when to prefer each approach"
+    ]
   },
   {
     "id": 15,
     "capabilities": ["Solver"],
     "difficulty": "Medium",
-    "text": "Explain how you'd use Goal Seek and Solver to (a) find break-even price given a cost and demand curve, and (b) optimize product mix to maximize profit subject to resource constraints. Which Solver engine/settings would you choose and why?"
+    "text": "Explain how you'd use Goal Seek and Solver to (a) find break-even price given a cost and demand curve, and (b) optimize product mix to maximize profit subject to resource constraints. Which Solver engine/settings would you choose and why?",
+    "evaluation_criteria": [
+      "Goal Seek: set profit to 0 by changing price (single variable)",
+      "Solver: max profit; decision vars quantities; resource constraints",
+      "Chooses Simplex/GRG/Evolutionary appropriately with reasons",
+      "Mentions bounds and starting values"
+    ]
   },
   {
     "id": 16,
     "capabilities": ["Performance", "Power Query"],
     "difficulty": "Advanced",
-    "text": "A workbook with 500k rows and many volatile formulas is unacceptably slow. List concrete strategies to diagnose and improve performance (calculation mode, replacing volatile functions, query folding, using helper columns, converting heavy formulas to Power Query/Power Pivot, etc.) and explain tradeoffs."
+    "text": "A workbook with 500k rows and many volatile formulas is unacceptably slow. List concrete strategies to diagnose and improve performance (calculation mode, replacing volatile functions, query folding, using helper columns, converting heavy formulas to Power Query/Power Pivot, etc.) and explain tradeoffs.",
+    "evaluation_criteria": [
+      "Diagnoses calc mode, precedents, recalc time; Perf Analyzer",
+      "Replaces volatile funcs (OFFSET/INDIRECT/TODAY/RAND) with safer",
+      "Limits ranges; uses Tables/helper columns; avoids whole-column arrays",
+      "Offloads ETL to Power Query; enables folding; aggregates in DAX",
+      "Notes .xlsb/64-bit, manual calc, and tradeoffs"
+    ]
   },
   {
     "id": 17,
     "capabilities": ["Security"],
     "difficulty": "Medium",
-    "text": "Explain differences between protecting a worksheet, protecting workbook structure, and encrypting a file with a password. How does Excel co-authoring interact with protection, and what methods do you use to audit or track changes in shared workbooks?"
+    "text": "Explain differences between protecting a worksheet, protecting workbook structure, and encrypting a file with a password. How does Excel co-authoring interact with protection, and what methods do you use to audit or track changes in shared workbooks?",
+    "evaluation_criteria": [
+      "Differentiates sheet vs workbook structure vs file encryption",
+      "Notes sheet/workbook protection are not true security",
+      "Explains co-authoring limits with protection",
+      "Auditing via Show Changes/Version history/legacy Track Changes"
+    ]
   },
   {
     "id": 18,
     "capabilities": ["Tables", "Formulas"],
     "difficulty": "Easy",
-    "text": "What are the advantages of Excel Tables and structured references over normal ranges and named ranges? Provide an example formula using structured references that sums a column conditionally."
+    "text": "What are the advantages of Excel Tables and structured references over normal ranges and named ranges? Provide an example formula using structured references that sums a column conditionally.",
+    "evaluation_criteria": [
+      "Lists key advantages: auto-expand, structured refs, auto fill, fewer errors",
+      "Mentions good integration with pivots/charts/slicers",
+      "Provides a correct SUMIFS using structured references",
+      "Notes formulas/charts update as table grows"
+    ]
   },
   {
     "id": 19,
     "capabilities": ["LAMBDA", "Formulas"],
     "difficulty": "Advanced",
-    "text": "Create a LAMBDA function (or describe one) that calculates Compound Annual Growth Rate (CAGR) given start value, end value and periods. Explain how to register it via Name Manager for reuse and mention current LAMBDA limitations."
+    "text": "Create a LAMBDA function (or describe one) that calculates Compound Annual Growth Rate (CAGR) given start value, end value and periods. Explain how to register it via Name Manager for reuse and mention current LAMBDA limitations.",
+    "evaluation_criteria": [
+      "Correct CAGR: (End/Start)^(1/Periods) - 1 with basic validation",
+      "Registers via Name Manager as LAMBDA(start,end,periods)",
+      "Shows call example and expected output",
+      "Notes limitations: workbook scope, sharing via add-in, no async"
+    ]
   },
   {
     "id": 20,
     "capabilities": ["Power Query", "Automation", "Security"],
     "difficulty": "Hard",
-    "text": "You need to automate importing JSON data from a secured REST API into Excel every morning, transform it and push results to a SharePoint folder. Outline an end-to-end solution using Power Query, authentication (OAuth/API key), scheduling options (Power Automate/Task Scheduler), and security considerations."
+    "text": "You need to automate importing JSON data from a secured REST API into Excel every morning, transform it and push results to a SharePoint folder. Outline an end-to-end solution using Power Query, authentication (OAuth/API key), and scheduling options (Power Automate/Task Scheduler), and security considerations.",
+    "evaluation_criteria": [
+      "PQ Web.Contents with OAuth/API key headers; params; secure creds",
+      "Transforms JSON; handles pagination/schema drift; try/otherwise",
+      "Schedules refresh (Power Automate or Task Scheduler/PowerShell)",
+      "Security: least privilege, secret rotation, avoid hardcoding, protect files"
+    ]
   }
 ]

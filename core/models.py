@@ -38,3 +38,4 @@ class Question(BaseModel):
     capabilities: List[str]
     difficulty: str
     text: str
+    evaluation_criteria: List[str]
