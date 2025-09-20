@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import random
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
@@ -59,7 +60,8 @@ class QuestionBank:
                 self._questions.append(question)
 
         except Exception as e:
-            print(f"Error loading question bank: {e}")
+            logger = logging.getLogger(__name__)
+            logger.error("Error loading question bank: %s", str(e))
             self._questions = []
 
     def get_all_questions(self) -> List[Question]:
@@ -246,7 +248,8 @@ class QuestionBank:
 
             return True
         except Exception as e:
-            print(f"Error saving question bank: {e}")
+            logger = logging.getLogger(__name__)
+            logger.error("Error saving question bank: %s", str(e))
             return False
 
     def add_question(
@@ -269,34 +272,35 @@ class QuestionBank:
             True if question was added successfully, False otherwise
         """
         # Validate inputs
+        logger = logging.getLogger(__name__)
         if not text.strip():
-            print("Error: Question text cannot be empty")
+            logger.error("Question text cannot be empty")
             return False
 
         if not capabilities:
-            print("Error: At least one capability must be specified")
+            logger.error("At least one capability must be specified")
             return False
 
         if not difficulty.strip():
-            print("Error: Difficulty cannot be empty")
+            logger.error("Difficulty cannot be empty")
             return False
 
         for cap in capabilities:
             if not isinstance(cap, str) or not cap.strip():
-                print("Error: All capabilities must be non-empty strings")
+                logger.error("All capabilities must be non-empty strings")
                 return False
 
         # Generate ID if not provided
         if question_id is None:
             question_id = self._generate_unique_id()
         elif not question_id.strip():
-            print("Error: Question ID cannot be empty")
+            logger.error("Question ID cannot be empty")
             return False
 
         # Check if ID already exists
         existing_ids = {q.id for q in self._questions}
         if question_id in existing_ids:
-            print(f"Error: Question ID '{question_id}' already exists")
+            logger.error("Question ID '%s' already exists", question_id)
             return False
 
         # Create new question
@@ -321,7 +325,7 @@ class QuestionBank:
             return True
 
         except Exception as e:
-            print(f"Error creating question: {e}")
+            logger.error("Error creating question: %s", str(e))
             return False
 
     def add_question_and_get_id(

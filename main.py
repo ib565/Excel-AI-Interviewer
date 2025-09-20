@@ -11,6 +11,7 @@ import streamlit as st
 
 from config import (
     APP_NAME,
+    LOGS_DIR,
     QUESTION_BANK_PATH,
     ensure_app_dirs,
     get_session_log_path,
@@ -20,6 +21,20 @@ from core.bridge import load_ai_agent
 from core.models import AIResponseWrapped, Message
 from storage.transcripts import save_event_line, save_message_line
 from storage.question_bank import get_question_bank
+
+# Configure root logger to reduce console clutter for submission
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    handlers=[
+        # File handler for all logs
+        logging.FileHandler(LOGS_DIR / "application.log", encoding="utf-8"),
+        # Console handler with reduced verbosity
+        logging.StreamHandler(),
+    ],
+)
+# Set console handler to WARNING level for cleaner terminal output
+logging.getLogger().handlers[1].setLevel(logging.WARNING)
 
 
 st.set_page_config(page_title=APP_NAME, layout="wide")
@@ -57,18 +72,19 @@ def _get_logger() -> logging.Logger:
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-        # Also add console handler for debugging
+        # Console handler with reduced verbosity for clean terminal output
         ch = logging.StreamHandler()
-        ch.setFormatter(formatter)
+        ch.setLevel(logging.WARNING)  # Only show warnings and errors in console
+        ch.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
         logger.addHandler(ch)
 
-    # Set up the AI agent logger
-    ai_logger = logging.getLogger("ai.agent.gemini")
-    if not ai_logger.handlers:
-        ai_logger.setLevel(logging.DEBUG)  # More detailed logging for AI agent
-        ai_logger.addHandler(fh)  # Use the same file handler
-        ai_logger.addHandler(ch)  # Use the same console handler
-        ai_logger.propagate = False  # Prevent duplicate logs
+        # Set up the AI agent logger with file-only logging
+        ai_logger = logging.getLogger("ai.agent.gemini")
+        if not ai_logger.handlers:
+            ai_logger.setLevel(logging.INFO)  # Reduced from DEBUG for cleaner output
+            ai_logger.addHandler(fh)  # Use the same file handler
+            # Remove console handler for AI agent to reduce terminal clutter
+            ai_logger.propagate = False  # Prevent duplicate logs
 
     return logger
 
@@ -97,7 +113,7 @@ def _append_message(
 def _render_header() -> None:
     st.title(APP_NAME)
     st.caption(
-        "Proof-of-concept: conversational Excel interviewer. AI agent is pluggable."
+        "Conversational Excel interviewer. Retrieves questions from a dynamic question bank, and evaluates the candidate's responses. Generates a performance summary at the end."
     )
 
 
@@ -188,6 +204,10 @@ def main() -> None:
     agent = load_ai_agent()
     agent_name = agent.name
 
+    # Log startup info for submission visibility
+    print(f"🚀 Excel Interviewer AI started successfully with agent: {agent_name}")
+    logger.info("Application started with agent: %s", agent_name)
+
     _render_header()
     _render_sidebar(agent_name)
 
@@ -196,7 +216,7 @@ def main() -> None:
     # Handle input BEFORE rendering the transcript to avoid one-message lag
     user_input = st.chat_input("Your message", disabled=st.session_state.ended)
     if user_input and not st.session_state.ended:
-        logger.info("user_message | %s", user_input)
+        # User message logged to file only (not console for clean output)
         _append_message("user", user_input)
 
         state: Dict[str, Any] = {
@@ -221,16 +241,12 @@ def main() -> None:
             )
             response = AIResponseWrapped(text="Agent error: using fallback reply.")
 
-        # Log the full assistant response details
-        logger.info(
+        # Log assistant response to file only (not console for clean output)
+        logger.debug(
             "assistant_message | text=%s | end=%s | metadata=%s",
-            response.text,
+            response.text[:100] + "..." if len(response.text) > 100 else response.text,
             response.end,
             json.dumps(response.metadata or {}, default=str),
-        )
-        logger.debug(
-            "assistant_full_response | %s",
-            json.dumps(response.model_dump(), indent=2, default=str),
         )
 
         _append_message("assistant", response.text, metadata=response.metadata)

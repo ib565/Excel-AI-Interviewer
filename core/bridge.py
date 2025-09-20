@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Protocol
 
@@ -29,18 +30,21 @@ def load_ai_agent() -> AIAgent:
     - File: ai/agent.py
     - Callable: get_agent() -> AIAgent
     """
+    logger = logging.getLogger(__name__)
     try:
         module = import_module("ai.agent")
         get_agent = getattr(module, "get_agent", None)
-        print("get_agent")
-        print(get_agent)
         if callable(get_agent):
+            logger.info("Successfully loaded AI agent from ai.agent module")
             return get_agent()
     except Exception as e:
-        print("load_ai_agent: Exception", e)
+        logger.warning(
+            "Failed to load AI agent from ai.agent module: %s. Using local fallback.",
+            str(e),
+        )
         # Fall back to local stub below
-        print("load_ai_agent: Fall back to local stub")
 
+    logger.info("Using local echo agent as fallback")
     return _LocalEchoAgent()
 
 
@@ -55,9 +59,6 @@ class _LocalEchoAgent:
     def generate_reply(
         self, messages: List[Message], state: Optional[Dict[str, Any]] = None
     ) -> AIResponseWrapped:
-        print("generate_reply")
-        print(messages)
-        print(state)
         last_user = next((m for m in reversed(messages) if m.role == "user"), None)
         if last_user is None:
             return AIResponseWrapped(

@@ -95,9 +95,8 @@ class GeminiAgent:
         # Prepare the full prompt
         full_prompt = f"{system_prompt}\n\nConversation:\n" + "\n".join(gemini_messages)
 
-        # Log the full prompt being sent to LLM
-        self.logger.debug("LLM_REQUEST | prompt=%s", full_prompt)
-        self.logger.info(
+        # Log LLM request details to file only
+        self.logger.debug(
             "LLM_REQUEST | message_count=%d | prompt_length=%d",
             len(messages),
             len(full_prompt),
@@ -113,10 +112,9 @@ class GeminiAgent:
                 ),
             )
 
-            # Log the raw API response
+            # Log basic API response info (detailed response goes to file only)
             self.logger.debug(
-                "LLM_RAW_RESPONSE | %s",
-                json.dumps(response.model_dump(), indent=2, default=str),
+                "LLM_RAW_RESPONSE | text_length=%d", len(getattr(response, "text", ""))
             )
 
             # Extract response text
@@ -149,36 +147,20 @@ class GeminiAgent:
                 end=should_end,
             )
 
-            # Log the final wrapped response details
+            # Log essential response info
             self.logger.info(
-                "LLM_RESPONSE | text=%s | end=%s | tokens_used=%s | metadata=%s",
-                cleaned_text,
+                "LLM_RESPONSE | end=%s | tokens_used=%s | questions_used=%d",
                 should_end,
                 wrapped_response.metadata.get("tokens_used", 0),
-                json.dumps(wrapped_response.metadata, default=str),
+                wrapped_response.metadata.get("questions_used", 0),
             )
-
-            # Log the raw text for debugging
-            self.logger.debug("LLM_TEXT | %s", reply_text_raw)
 
             return wrapped_response
 
         except Exception as e:
             # Log the error details
-            self.logger.error("LLM_ERROR | %s", str(e))
-            self.logger.debug(
-                "LLM_ERROR_DETAILS | %s",
-                json.dumps(
-                    {
-                        "error_type": type(e).__name__,
-                        "error_message": str(e),
-                        "prompt_length": (
-                            len(full_prompt) if "full_prompt" in locals() else 0
-                        ),
-                        "message_count": len(messages),
-                    },
-                    indent=2,
-                ),
+            self.logger.error(
+                "LLM_ERROR | %s | message_count=%d", str(e), len(messages)
             )
 
             # Fallback response if Gemini fails
@@ -335,7 +317,6 @@ class GeminiAgent:
             additional_notes=additional_notes,
         )
 
-        self.logger.debug("LLM_REQUEST_GENERATE_QUESTION | %s", instruction)
         response = self.client.models.generate_content(
             model=self.model,
             contents=instruction,
@@ -343,7 +324,6 @@ class GeminiAgent:
         )
 
         raw_text = getattr(response, "text", "").strip()
-        self.logger.debug("LLM_RAW_RESPONSE_GENERATE_QUESTION | %s", raw_text)
 
         # Strip code fences if present
         cleaned = raw_text
@@ -397,7 +377,6 @@ class GeminiAgent:
             self.logger.info(
                 "GENERATING_PERFORMANCE_SUMMARY | message_count=%d", len(messages)
             )
-            self.logger.debug("EVALUATION_PROMPT | %s", evaluation_prompt)
 
             # Call Gemini API for evaluation
             response = self.client.models.generate_content(
@@ -413,23 +392,15 @@ class GeminiAgent:
             self.logger.info(
                 "PERFORMANCE_SUMMARY_GENERATED | length=%d", len(evaluation_text)
             )
-            self.logger.debug("EVALUATION_RESPONSE | %s", evaluation_text)
 
             return evaluation_text
 
         except Exception as e:
             # Log the error
-            self.logger.error("PERFORMANCE_EVALUATION_ERROR | %s", str(e))
-            self.logger.debug(
-                "PERFORMANCE_EVALUATION_ERROR_DETAILS | %s",
-                json.dumps(
-                    {
-                        "error_type": type(e).__name__,
-                        "error_message": str(e),
-                        "message_count": len(messages),
-                    },
-                    indent=2,
-                ),
+            self.logger.error(
+                "PERFORMANCE_EVALUATION_ERROR | %s | message_count=%d",
+                str(e),
+                len(messages),
             )
 
             # Return a fallback summary
