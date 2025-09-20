@@ -91,14 +91,14 @@ class QuestionBank:
         self,
         exclude_ids: Optional[Set[str]] = None,
         difficulty: Optional[str] = None,
-        capability: Optional[str] = None,
+        capabilities: Optional[List[str]] = None,
     ) -> Optional[Question]:
         """Select a random question based on optional filters.
 
         Args:
             exclude_ids: Set of question IDs to exclude from selection
             difficulty: Filter by difficulty level
-            capability: Filter by capability
+            capabilities: Filter by capabilities
 
         Returns:
             A randomly selected Question or None if no questions match criteria
@@ -112,11 +112,15 @@ class QuestionBank:
         if difficulty:
             candidates = self.get_questions_by_difficulty(difficulty)
 
-        if capability:
+        if capabilities:
+            capabilities_lower = [c.lower() for c in capabilities]
             candidates = [
                 q
                 for q in candidates
-                if capability.lower() in [c.lower() for c in q.capability]
+                if any(
+                    cap_lower in [c.lower() for c in q.capability]
+                    for cap_lower in capabilities_lower
+                )
             ]
 
         if not candidates:

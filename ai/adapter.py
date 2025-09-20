@@ -154,6 +154,16 @@ Select appropriate questions based on:
 
         return False
 
+    def _retrieve_question(
+        self, capabilities: Optional[List[str]] = None, difficulty: Optional[str] = None
+    ) -> Optional[Question]:
+        """Retrieve a question from the question bank."""
+        return self.question_bank.select_random_question(
+            exclude_ids=self._used_question_ids,
+            capabilities=capabilities,
+            difficulty=difficulty,
+        )
+
 
 def get_adapter() -> AIAdapter:
     """Factory function that returns the Gemini adapter.
